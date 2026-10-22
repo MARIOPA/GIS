@@ -13,7 +13,7 @@ seleccionables cada 5, 10 o 20 m. También guarda una copia local del código 0.
 SHA-256 de la actualización:
 
 ```text
-368ecc27b2bce31ee1b1e48d6b4bc40d10fd97f8b66baef654470cec57e0c5ec
+ef6022033838a32692366bc09da223f9851350904287d611434fe4d0eda01353
 ```
 
 `updates/0.3.0/mdt-piloto-v2.zip` contiene la nueva superficie por separado para

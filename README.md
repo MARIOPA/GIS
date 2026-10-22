@@ -1,5 +1,24 @@
 # Descargas de Torrents 0.2.0
 
+## Actualización 0.3.0: relieve y curvas de nivel
+
+Quien ya tenga la aplicación 0.2.0 debe descargar únicamente
+`updates/0.3.0/actualizacion-torrents-0.3.0.zip`, extraer su carpeta dentro de
+`C:\Torrents\GIS-downloads` y ejecutar `ACTUALIZAR-TORRENTS-0.3.cmd`.
+
+La actualización conserva `.data`, los proyectos y la superficie anterior. Añade
+una superficie v2 con elevación y sombreado separados, además de curvas de nivel
+seleccionables cada 5, 10 o 20 m. También guarda una copia local del código 0.2.0.
+
+SHA-256 de la actualización:
+
+```text
+368ecc27b2bce31ee1b1e48d6b4bc40d10fd97f8b66baef654470cec57e0c5ec
+```
+
+`updates/0.3.0/mdt-piloto-v2.zip` contiene la nueva superficie por separado para
+otras instalaciones. No hace falta importarla después de aplicar la actualización.
+
 Esta rama contiene una entrega privada para Windows 10/11 x64 y el MDT piloto por
 separado. La aplicación preparada ya lleva el MDT colocado en su estructura local.
 

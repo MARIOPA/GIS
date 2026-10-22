@@ -1,0 +1,12 @@
+# Read-only elevation/profile runtime; preparing new LiDAR uses requirements-lidar.lock.
+affine==3.0.1
+attrs==26.1.0
+certifi==2026.10.19
+click==8.5.0
+click-plugins==1.1.1.2
+cligj==0.7.2
+numpy==2.2.6
+pyparsing==3.3.3
+pyproj==3.7.2
+rasterio==1.4.4
+colorama==0.4.6

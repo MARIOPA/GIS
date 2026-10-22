@@ -1,0 +1,248 @@
+{
+  "file": "PNOA_2024_BAL_462-4382_H31_NPC03.laz",
+  "bytes": 88074345,
+  "las_version": "1.4",
+  "point_format": 8,
+  "declared_points": 13837404,
+  "compressed": true,
+  "bounds": {
+    "min": [
+      462000.0,
+      4381000.0,
+      102.185
+    ],
+    "max": [
+      462999.99,
+      4381999.99,
+      2600.565
+    ]
+  },
+  "scale": [
+    0.001,
+    0.001,
+    0.001
+  ],
+  "offset": [
+    486000.0,
+    4380000.0,
+    -0.0
+  ],
+  "crs": {
+    "$schema": "https://proj.org/schemas/v0.7/projjson.schema.json",
+    "type": "ProjectedCRS",
+    "name": "ETRS89 / UTM zone 31N",
+    "base_crs": {
+      "name": "ETRS89",
+      "datum_ensemble": {
+        "name": "European Terrestrial Reference System 1989 ensemble",
+        "members": [
+          {
+            "name": "European Terrestrial Reference Frame 1989",
+            "id": {
+              "authority": "EPSG",
+              "code": 1178
+            }
+          },
+          {
+            "name": "European Terrestrial Reference Frame 1990",
+            "id": {
+              "authority": "EPSG",
+              "code": 1179
+            }
+          },
+          {
+            "name": "European Terrestrial Reference Frame 1991",
+            "id": {
+              "authority": "EPSG",
+              "code": 1180
+            }
+          },
+          {
+            "name": "European Terrestrial Reference Frame 1992",
+            "id": {
+              "authority": "EPSG",
+              "code": 1181
+            }
+          },
+          {
+            "name": "European Terrestrial Reference Frame 1993",
+            "id": {
+              "authority": "EPSG",
+              "code": 1182
+            }
+          },
+          {
+            "name": "European Terrestrial Reference Frame 1994",
+            "id": {
+              "authority": "EPSG",
+              "code": 1183
+            }
+          },
+          {
+            "name": "European Terrestrial Reference Frame 1996",
+            "id": {
+              "authority": "EPSG",
+              "code": 1184
+            }
+          },
+          {
+            "name": "European Terrestrial Reference Frame 1997",
+            "id": {
+              "authority": "EPSG",
+              "code": 1185
+            }
+          },
+          {
+            "name": "European Terrestrial Reference Frame 2000",
+            "id": {
+              "authority": "EPSG",
+              "code": 1186
+            }
+          },
+          {
+            "name": "European Terrestrial Reference Frame 2005",
+            "id": {
+              "authority": "EPSG",
+              "code": 1204
+            }
+          },
+          {
+            "name": "European Terrestrial Reference Frame 2014",
+            "id": {
+              "authority": "EPSG",
+              "code": 1206
+            }
+          }
+        ],
+        "ellipsoid": {
+          "name": "GRS 1980",
+          "semi_major_axis": 6378137,
+          "inverse_flattening": 298.2572221
+        },
+        "accuracy": "0.1",
+        "id": {
+          "authority": "EPSG",
+          "code": 6258
+        }
+      },
+      "coordinate_system": {
+        "subtype": "ellipsoidal",
+        "axis": [
+          {
+            "name": "Geodetic latitude",
+            "abbreviation": "Lat",
+            "direction": "north",
+            "unit": "degree"
+          },
+          {
+            "name": "Geodetic longitude",
+            "abbreviation": "Lon",
+            "direction": "east",
+            "unit": "degree"
+          }
+        ]
+      },
+      "id": {
+        "authority": "EPSG",
+        "code": 4258
+      }
+    },
+    "conversion": {
+      "name": "UTM zone 31N",
+      "method": {
+        "name": "Transverse Mercator",
+        "id": {
+          "authority": "EPSG",
+          "code": 9807
+        }
+      },
+      "parameters": [
+        {
+          "name": "Latitude of natural origin",
+          "value": 0,
+          "unit": "degree"
+        },
+        {
+          "name": "Longitude of natural origin",
+          "value": 3,
+          "unit": "degree"
+        },
+        {
+          "name": "Scale factor at natural origin",
+          "value": 0.9996,
+          "unit": "unity"
+        },
+        {
+          "name": "False easting",
+          "value": 500000,
+          "unit": "metre"
+        },
+        {
+          "name": "False northing",
+          "value": 0,
+          "unit": "metre"
+        }
+      ]
+    },
+    "coordinate_system": {
+      "subtype": "Cartesian",
+      "axis": [
+        {
+          "name": "Easting",
+          "abbreviation": "E",
+          "direction": "east",
+          "unit": "metre"
+        },
+        {
+          "name": "Northing",
+          "abbreviation": "N",
+          "direction": "north",
+          "unit": "metre"
+        }
+      ]
+    },
+    "id": {
+      "authority": "EPSG",
+      "code": 25831
+    }
+  },
+  "crs_authority": [
+    "EPSG",
+    "25831"
+  ],
+  "axis_units": [
+    "metre",
+    "metre"
+  ],
+  "vertical_reference_in_crs": false,
+  "bbox_area_native_units2": 999980.0001002142,
+  "classifications": {
+    "1": 230558,
+    "2": 2175303,
+    "3": 1345358,
+    "4": 1337882,
+    "5": 5036005,
+    "7": 5262,
+    "12": 3699786,
+    "64": 93,
+    "6": 7144,
+    "14": 13
+  },
+  "flags": {
+    "withheld": 0,
+    "overlap": 0,
+    "synthetic": 0,
+    "key_point": 0
+  },
+  "scanned_points": 13837404,
+  "valid_ground_points": 2175303,
+  "complete_scan": true,
+  "notes": [
+    "La densidad sobre el rectángulo envolvente no mide la cobertura efectiva.",
+    "La referencia vertical debe contrastarse con la ficha y las especificaciones del vuelo."
+  ],
+  "nominal_density_pts_m2": 13.837680752228312,
+  "valid_ground_density_pts_m2": 2.175346506712134,
+  "candidate_resolution_m": 1.5,
+  "sha256": "ef6745d44519a57b2015b5afa2d7e7dfdc3f99d2638deb4d7c2473c1a20a2f1f"
+}

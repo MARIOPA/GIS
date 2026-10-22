@@ -11,6 +11,11 @@ separado. La aplicación preparada ya lleva el MDT colocado en su estructura loc
 4. Haz doble clic en `PREPARAR-Y-ABRIR-TORRENTS.cmd`.
 5. El reconstruidor comprueba el SHA-256, extrae la aplicación y abre Torrents.
 
+Si una descarga anterior se interrumpió durante `Expand-Archive`, sustituye el
+reconstruidor por la versión actual o ejecuta `REPARAR-Y-ABRIR-TORRENTS.cmd`.
+Esta versión utiliza `tar.exe`, incluido en Windows 10, para admitir mejor rutas
+largas. Si la carpeta está dentro de OneDrive y falla, muévela a `C:\Torrents`.
+
 Los tres archivos `windows/*.parte-*` son partes del mismo ZIP. Deben permanecer
 juntos dentro de la carpeta `windows`; no se abren uno por uno.
 

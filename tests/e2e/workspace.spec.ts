@@ -45,6 +45,17 @@ test("Terrain requests numeric XYZ tiles and changes detail when zooming", async
             bounds: [2.557, 39.577, 2.57, 39.587],
             tile_size: 256,
           },
+          hillshade: {
+            tiles: ["/api/terrain/hillshade/{z}/{x}/{y}.png"],
+            minzoom: 8,
+            maxzoom: 17,
+            bounds: [2.557, 39.577, 2.57, 39.587],
+            tile_size: 256,
+          },
+          contours: {
+            url: "/api/terrain/contours.geojson",
+            intervals: [5, 10, 20],
+          },
         },
       },
     }),
@@ -63,6 +74,17 @@ test("Terrain requests numeric XYZ tiles and changes detail when zooming", async
       body: Buffer.from(png, "base64"),
     });
   });
+  await page.route("**/api/terrain/hillshade/**", (route) =>
+    route.fulfill({
+      contentType: "image/png",
+      body: Buffer.from(png, "base64"),
+    }),
+  );
+  await page.route("**/api/terrain/contours.geojson", (route) =>
+    route.fulfill({
+      json: { type: "FeatureCollection", features: [] },
+    }),
+  );
   await ready(page);
   const focus = page.getByRole("button", {
     name: "Ver piloto LiDAR",
@@ -70,6 +92,11 @@ test("Terrain requests numeric XYZ tiles and changes detail when zooming", async
   });
   if (!(await focus.isVisible()))
     await page.getByRole("button", { name: "Elevation", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: /Relieve sombreado/ }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: /Curvas de nivel/ }).click();
+  await page.getByLabel("Intervalo de curvas de nivel").selectOption("5");
   await focus.click();
   await expect.poll(() => zooms.has(15)).toBe(true);
   await page.locator(".maplibregl-canvas").hover();

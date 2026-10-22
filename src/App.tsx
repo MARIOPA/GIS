@@ -112,6 +112,14 @@ type Terrain = {
     bounds: [number, number, number, number];
     tile_size: number;
   };
+  hillshade?: {
+    tiles: string[];
+    minzoom: number;
+    maxzoom: number;
+    bounds: [number, number, number, number];
+    tile_size: number;
+  };
+  contours?: { url: string; intervals: Array<5 | 10 | 20> };
   coordinates: number[][];
   center: number[];
   resolution_m: number;
@@ -966,19 +974,83 @@ export default function App() {
                           <LockKeyhole size={12} />
                         </div>
                       )}
-                      <div className="unavailable-row">
-                        <Square size={13} />
-                        <span>Relieve sombreado</span>
-                        <LockKeyhole size={12} />
-                      </div>
-                      <div className="unavailable-row">
-                        <Square size={13} />
-                        <span>Curvas de nivel</span>
-                        <LockKeyhole size={12} />
-                      </div>
+                      {terrain?.hillshade ? (
+                        <button
+                          className="terrain-layer-row"
+                          onClick={() =>
+                            update((p) => ({
+                              ...p,
+                              hillshadeVisible: !p.hillshadeVisible,
+                            }))
+                          }
+                        >
+                          {project.hillshadeVisible ? (
+                            <Eye size={14} />
+                          ) : (
+                            <EyeOff size={14} />
+                          )}
+                          <span>Relieve sombreado</span>
+                          <span className="status-chip">Disponible</span>
+                        </button>
+                      ) : (
+                        <div className="unavailable-row">
+                          <Square size={13} />
+                          <span>Relieve sombreado</span>
+                          <LockKeyhole size={12} />
+                        </div>
+                      )}
+                      {terrain?.contours ? (
+                        <div className="contour-control">
+                          <button
+                            className="terrain-layer-row"
+                            onClick={() =>
+                              update((p) => ({
+                                ...p,
+                                contoursVisible: !p.contoursVisible,
+                              }))
+                            }
+                          >
+                            {project.contoursVisible ? (
+                              <Eye size={14} />
+                            ) : (
+                              <EyeOff size={14} />
+                            )}
+                            <span>Curvas de nivel</span>
+                            <span className="status-chip">Disponible</span>
+                          </button>
+                          <label>
+                            Intervalo
+                            <select
+                              aria-label="Intervalo de curvas de nivel"
+                              value={project.contourInterval || 10}
+                              onChange={(event) =>
+                                update((p) => ({
+                                  ...p,
+                                  contourInterval: Number(event.target.value) as
+                                    | 5
+                                    | 10
+                                    | 20,
+                                }))
+                              }
+                            >
+                              {terrain.contours.intervals.map((interval) => (
+                                <option key={interval} value={interval}>
+                                  {interval} m
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        </div>
+                      ) : (
+                        <div className="unavailable-row">
+                          <Square size={13} />
+                          <span>Curvas de nivel</span>
+                          <LockKeyhole size={12} />
+                        </div>
+                      )}
                       <p className="category-note">
                         {terrain
-                          ? "Vista de elevación con sombreado del MDT real. No es un MDS."
+                          ? "Elevación, sombreado y curvas derivados del MDT real. No es un MDS."
                           : "Piloto PNOA 2024 · pendiente de procesar."}
                       </p>
                     </>,

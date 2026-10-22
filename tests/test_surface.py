@@ -66,12 +66,19 @@ class SurfaceTest(unittest.TestCase):
             counts.append(pixels)
         self.assertGreater(counts[-1], counts[0])
         self.assertFalse(self.info['hydrology_ready'])
+        self.assertEqual(self.info['contours']['minimum_interval_m'], 5)
+        self.assertGreater(self.info['contours']['feature_count'], 0)
+        contours = json.loads((self.output / 'contours.geojson').read_text())
+        self.assertTrue(all(-180 <= p[0] <= 180 and -90 <= p[1] <= 90
+                            for feature in contours['features']
+                            for p in feature['geometry']['coordinates']))
+        self.assertTrue(any((self.output / 'hillshade' / str(zoom)).rglob('*.png')))
 
     def test_zip_import_is_repeatable_and_refuses_overwrite(self):
         archive = self.package()
         data = self.root / 'data'
         result = import_surface(archive, data)
-        self.assertEqual(result['id'], 'pnoa-bal-462-4382-v1')
+        self.assertEqual(result['id'], 'pnoa-bal-462-4382-v2')
         self.assertFalse(result['hydrology_ready'])
         self.assertEqual(import_surface(archive, data)['id'], result['id'])
         installed = Path(result['directory'])

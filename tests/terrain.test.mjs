@@ -40,6 +40,9 @@ print(json.dumps({'point':transform.transform(462010.5,4381989.5),'line':[transf
     "base64",
   );
   writeFileSync(join(tileDir, "1.png"), png);
+  const hillshadeDir = join(directory, "hillshade/2/1");
+  mkdirSync(hillshadeDir, { recursive: true });
+  writeFileSync(join(hillshadeDir, "1.png"), png);
   writeFileSync(
     join(directory, "tiles.json"),
     JSON.stringify({
@@ -48,6 +51,29 @@ print(json.dumps({'point':transform.transform(462010.5,4381989.5),'line':[transf
       bounds: [-90, 0, 0, 66],
       tile_size: 256,
       count: 1,
+    }),
+  );
+  writeFileSync(
+    join(directory, "hillshade.json"),
+    JSON.stringify({
+      minzoom: 2,
+      maxzoom: 2,
+      bounds: [-90, 0, 0, 66],
+      tile_size: 256,
+      count: 1,
+    }),
+  );
+  writeFileSync(
+    join(directory, "contours.geojson"),
+    JSON.stringify({
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          properties: { elevation: 100 },
+          geometry: { type: "LineString", coordinates: [[2.5, 39.5], [2.6, 39.6]] },
+        },
+      ],
     }),
   );
   const db = openStore(join(directory, "db"));
@@ -71,11 +97,18 @@ print(json.dumps({'point':transform.transform(462010.5,4381989.5),'line':[transf
   assert.deepEqual(capabilities.terrain.raster.tiles, [
     "/api/terrain/tiles/{z}/{x}/{y}.png",
   ]);
+  assert.deepEqual(capabilities.terrain.hillshade.tiles, [
+    "/api/terrain/hillshade/{z}/{x}/{y}.png",
+  ]);
+  assert.deepEqual(capabilities.terrain.contours.intervals, [5, 10, 20]);
   const tile = await fetch(base + "/api/terrain/tiles/2/1/1.png");
   assert.equal(tile.status, 200);
   assert.equal(tile.headers.get("content-type"), "image/png");
   assert.match(tile.headers.get("cache-control"), /^private/);
   assert.deepEqual(Buffer.from(await tile.arrayBuffer()), png);
+  assert.equal((await fetch(base + "/api/terrain/hillshade/2/1/1.png")).status, 200);
+  const contours = await (await fetch(base + "/api/terrain/contours.geojson")).json();
+  assert.equal(contours.features[0].properties.elevation, 100);
   assert.equal(
     (await fetch(base + "/api/terrain/tiles/2/2/1.png")).status,
     204,

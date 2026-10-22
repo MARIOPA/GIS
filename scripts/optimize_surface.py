@@ -6,6 +6,7 @@ import json
 import math
 from pathlib import Path
 import shutil
+import subprocess
 import tempfile
 
 import numpy as np
@@ -14,7 +15,7 @@ from rasterio.enums import Resampling
 from rasterio.shutil import copy as raster_copy
 from rasterio.transform import from_bounds
 from rasterio.vrt import WarpedVRT
-from rasterio.warp import transform_bounds
+from rasterio.warp import transform_bounds, transform_geom
 
 RADIUS = 20037508.342789244
 
@@ -79,16 +80,22 @@ def optimize(source, output, minzoom=8, maxzoom=17):
         shade = np.clip(np.cos(np.pi / 4) * np.cos(slope) + np.sin(np.pi / 4) * np.sin(slope) * np.cos(7 * np.pi / 4 - aspect), 0.2, 1)
         t = np.clip((raw - lo) / max(0.001, hi - lo), 0, 1)
         low, high = np.array([47, 130, 130]), np.array([211, 227, 177])
-        rgb = ((low * (1 - t[:, :, None]) + high * t[:, :, None]) * (0.6 + shade[:, :, None] * 0.4)).astype('uint8')
+        rgb = (low * (1 - t[:, :, None]) + high * t[:, :, None]).astype('uint8')
         rgba = np.concatenate([rgb, ((~np.ma.getmaskarray(arr))[:, :, None] * 255).astype('uint8')], axis=2)
+        shadow = ((1 - shade) * 210).astype('uint8')
+        hillshade_rgba = np.concatenate([
+            np.zeros((*shadow.shape, 3), dtype='uint8'),
+            (shadow * (~np.ma.getmaskarray(arr))).astype('uint8')[:, :, None],
+        ], axis=2)
         with tempfile.TemporaryDirectory(prefix='torrents-display-') as work:
-            image = Path(work) / 'display.tif'
-            with rasterio.open(image, 'w', driver='GTiff', width=src.width, height=src.height,
-                               count=4, dtype='uint8', crs=src.crs, transform=src.transform) as dst:
-                dst.write(rgba.transpose(2, 0, 1))
-                dst.colorinterp = (rasterio.enums.ColorInterp.red, rasterio.enums.ColorInterp.green,
-                                   rasterio.enums.ColorInterp.blue, rasterio.enums.ColorInterp.alpha)
-            with rasterio.open(image) as display:
+            def write_tiles(pixels_rgba, folder):
+                image = Path(work) / f'{folder}.tif'
+                with rasterio.open(image, 'w', driver='GTiff', width=src.width, height=src.height,
+                                   count=4, dtype='uint8', crs=src.crs, transform=src.transform) as dst:
+                    dst.write(pixels_rgba.transpose(2, 0, 1))
+                    dst.colorinterp = (rasterio.enums.ColorInterp.red, rasterio.enums.ColorInterp.green,
+                                       rasterio.enums.ColorInterp.blue, rasterio.enums.ColorInterp.alpha)
+                display = rasterio.open(image)
                 for z in range(minzoom, maxzoom + 1):
                     xs, ys = tile_range(bounds, z)
                     span = 2 * RADIUS / (2 ** z)
@@ -99,10 +106,34 @@ def optimize(source, output, minzoom=8, maxzoom=17):
                             with WarpedVRT(display, crs='EPSG:3857', transform=transform,
                                            width=256, height=256, resampling=Resampling.average) as vrt:
                                 pixels = vrt.read()
-                            path = output / 'tiles' / str(z) / str(x) / f'{y}.png'
+                            path = output / folder / str(z) / str(x) / f'{y}.png'
                             path.parent.mkdir(parents=True, exist_ok=True)
                             with rasterio.open(path, 'w', driver='PNG', width=256, height=256, count=4, dtype='uint8') as dst:
                                 dst.write(pixels)
+                display.close()
+            write_tiles(rgba, 'tiles')
+            write_tiles(hillshade_rgba, 'hillshade')
+        with tempfile.TemporaryDirectory(prefix='torrents-contours-') as work:
+            projected = Path(work) / 'contours.geojson'
+            try:
+                subprocess.run([
+                    'gdal_contour', '-q', '-a', 'elevation', '-i', '5',
+                    '-f', 'GeoJSON', str(output / 'dtm.tif'), str(projected),
+                ], check=True)
+            except FileNotFoundError as error:
+                raise ValueError('Se necesita gdal_contour para preparar curvas de nivel.') from error
+            contours = json.loads(projected.read_text(encoding='utf-8'))
+            features = []
+            for feature in contours['features']:
+                elevation = float(feature['properties']['elevation'])
+                features.append({
+                    'type': 'Feature',
+                    'properties': {'elevation': elevation},
+                    'geometry': transform_geom(src.crs, 'EPSG:4326', feature['geometry'], precision=7),
+                })
+            (output / 'contours.geojson').write_text(json.dumps({
+                'type': 'FeatureCollection', 'features': features,
+            }, ensure_ascii=False, separators=(',', ':')) + '\n', encoding='utf-8')
     for name in ('manifest.json', 'preview.png', 'preview.json'):
         shutil.copy2(source / name, output / name)
     with rasterio.open(output / 'dtm.tif') as optimized, rasterio.open(source / 'dtm.tif') as original:
@@ -114,11 +145,14 @@ def optimize(source, output, minzoom=8, maxzoom=17):
                  'bounds': list(bounds), 'count': count, 'palette_percentiles': [lo, hi],
                  'purpose': 'display_only_not_analysis'}
     (output / 'tiles.json').write_text(json.dumps(tile_info, indent=2) + '\n', encoding='utf-8')
-    report = {'id': 'pnoa-bal-462-4382-v1', 'schema_version': 1,
+    hillshade_info = {**tile_info, 'purpose': 'display_hillshade_only'}
+    (output / 'hillshade.json').write_text(json.dumps(hillshade_info, indent=2) + '\n', encoding='utf-8')
+    report = {'id': 'pnoa-bal-462-4382-v2', 'schema_version': 1,
               'source_laz_sha256': manifest['source_inspection']['sha256'],
               'original_dtm_sha256': sha256(source / 'dtm.tif'), 'dtm_sha256': sha256(output / 'dtm.tif'),
               'native_values_unchanged': True, 'native_resolution_m': manifest['resolution_m'],
-              'cog_overviews': actual_factors, 'tiles': tile_info,
+              'cog_overviews': actual_factors, 'tiles': tile_info, 'hillshade': hillshade_info,
+              'contours': {'minimum_interval_m': 5, 'feature_count': len(features)},
               'hydrology_ready': False, 'validation': manifest['status'],
               'vertical_reference': manifest['vertical_reference']}
     (output / 'surface.json').write_text(json.dumps(report, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')

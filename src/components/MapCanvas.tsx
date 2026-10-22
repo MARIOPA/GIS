@@ -34,6 +34,14 @@ type Props = {
       bounds: [number, number, number, number];
       tile_size: number;
     };
+    hillshade?: {
+      tiles: string[];
+      minzoom: number;
+      maxzoom: number;
+      bounds: [number, number, number, number];
+      tile_size: number;
+    };
+    contours?: { url: string; intervals: Array<5 | 10 | 20> };
   } | null;
   project: Project;
   tool: Tool;
@@ -309,7 +317,14 @@ export default forwardRef<MapHandle, Props>(function MapCanvas(props, ref) {
       const sourceId = (event as { sourceId?: string }).sourceId;
       if (
         sourceId &&
-        ["pilot-terrain", "sketches", "draft", "coast"].includes(sourceId)
+        [
+          "pilot-terrain",
+          "pilot-hillshade",
+          "pilot-contours",
+          "sketches",
+          "draft",
+          "coast",
+        ].includes(sourceId)
       )
         return;
       if (
@@ -545,6 +560,83 @@ export default forwardRef<MapHandle, Props>(function MapCanvas(props, ref) {
       props.project.terrainVisible ? "visible" : "none",
     );
   }, [props.terrain, props.project.terrainVisible, ready]);
+  useEffect(() => {
+    const m = mapRef.current;
+    if (!m?.getSource("sketches") || !props.terrain?.hillshade) return;
+    if (!m.getSource("pilot-hillshade")) {
+      m.addSource("pilot-hillshade", {
+        type: "raster",
+        tiles: props.terrain.hillshade.tiles.map((url) =>
+          new URL(url, window.location.origin).href
+            .replaceAll("%7B", "{")
+            .replaceAll("%7D", "}"),
+        ),
+        tileSize: props.terrain.hillshade.tile_size,
+        minzoom: props.terrain.hillshade.minzoom,
+        maxzoom: props.terrain.hillshade.maxzoom,
+        bounds: props.terrain.hillshade.bounds,
+      });
+      m.addLayer(
+        {
+          id: "pilot-hillshade",
+          type: "raster",
+          source: "pilot-hillshade",
+          paint: { "raster-opacity": 0.48, "raster-fade-duration": 0 },
+        },
+        "sketch-fill",
+      );
+    }
+    m.setLayoutProperty(
+      "pilot-hillshade",
+      "visibility",
+      props.project.hillshadeVisible ? "visible" : "none",
+    );
+  }, [props.terrain, props.project.hillshadeVisible, ready]);
+  useEffect(() => {
+    const m = mapRef.current;
+    if (!m?.getSource("sketches") || !props.terrain?.contours) return;
+    if (!m.getSource("pilot-contours")) {
+      m.addSource("pilot-contours", {
+        type: "geojson",
+        data: props.terrain.contours.url,
+      });
+      m.addLayer(
+        {
+          id: "pilot-contours",
+          type: "line",
+          source: "pilot-contours",
+          minzoom: 12,
+          paint: {
+            "line-color": "#38575d",
+            "line-opacity": ["interpolate", ["linear"], ["zoom"], 12, 0.35, 16, 0.72],
+            "line-width": [
+              "case",
+              ["==", ["%", ["get", "elevation"], 20], 0],
+              1.35,
+              0.75,
+            ],
+          },
+        },
+        "sketch-fill",
+      );
+    }
+    const interval = props.project.contourInterval || 10;
+    m.setFilter("pilot-contours", [
+      "==",
+      ["%", ["get", "elevation"], interval],
+      0,
+    ]);
+    m.setLayoutProperty(
+      "pilot-contours",
+      "visibility",
+      props.project.contoursVisible ? "visible" : "none",
+    );
+  }, [
+    props.terrain,
+    props.project.contoursVisible,
+    props.project.contourInterval,
+    ready,
+  ]);
   useEffect(() => {
     const m = mapRef.current;
     markers.current.forEach((marker) => marker.remove());

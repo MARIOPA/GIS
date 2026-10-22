@@ -28,6 +28,6 @@ with rasterio.open(root/'dtm.tif') as src:
  assert src.width == m['width'] and src.height == m['height'], 'Dimensiones del MDT incompatibles.'
 print('Piloto disponible: MDT real provisional, sin validación vertical ni hidrológica.')
 PY
-if [[ ! -f .data/surfaces/pnoa-bal-462-4382-v1/surface.json ]]; then
- .venv-lidar/bin/python scripts/optimize_surface.py .data/terrain .data/surfaces/pnoa-bal-462-4382-v1
+if [[ ! -f .data/surfaces/pnoa-bal-462-4382-v2/surface.json ]]; then
+ .venv-lidar/bin/python scripts/optimize_surface.py .data/terrain .data/surfaces/pnoa-bal-462-4382-v2
 fi

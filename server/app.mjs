@@ -49,7 +49,7 @@ export function createApp({
   });
   app.use(express.json({ limit: "25mb" }));
   app.get("/api/health", (_, res) =>
-    res.json({ status: "ok", app: "torrents", version: "0.2.0" }),
+    res.json({ status: "ok", app: "torrents", version: "0.3.0" }),
   );
   const configured = () =>
     Number(db.prepare("SELECT count(*) AS n FROM users").get().n) > 0;

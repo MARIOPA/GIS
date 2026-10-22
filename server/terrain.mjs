@@ -32,6 +32,26 @@ export function terrainCapability(directory) {
             },
           }
         : {}),
+      ...(existsSync(resolve(directory, "hillshade.json"))
+        ? {
+            hillshade: {
+              ...JSON.parse(
+                readFileSync(resolve(directory, "hillshade.json"), "utf8"),
+              ),
+              tiles: [
+                "/api/terrain/hillshade/{z}/{x}/{y}.png" + version,
+              ],
+            },
+          }
+        : {}),
+      ...(existsSync(resolve(directory, "contours.geojson"))
+        ? {
+            contours: {
+              url: "/api/terrain/contours.geojson" + version,
+              intervals: [5, 10, 20],
+            },
+          }
+        : {}),
       message:
         "MDT provisional. Datum vertical y precisión pendientes de validar.",
     };
@@ -58,6 +78,25 @@ export function terrainRouter(directory) {
     // Cache in the browser privately; surface changes require restarting the local server.
     res.set("Cache-Control", "private, max-age=3600");
     res.sendFile(file, { dotfiles: "allow" });
+  });
+  router.get("/hillshade/:z/:x/:y.png", (req, res) => {
+    const parts = [req.params.z, req.params.x, req.params.y];
+    if (!parts.every((p) => /^(0|[1-9]\d{0,6})$/.test(p)))
+      return res.status(400).end();
+    const [z, x, y] = parts.map(Number);
+    if (z > 20 || x >= 2 ** z || y >= 2 ** z) return res.status(400).end();
+    const file =
+      directory &&
+      resolve(directory, "hillshade", String(z), String(x), `${y}.png`);
+    if (!file || !existsSync(file)) return res.status(204).end();
+    res.set("Cache-Control", "private, max-age=3600");
+    res.sendFile(file, { dotfiles: "allow" });
+  });
+  router.get("/contours.geojson", (_, res) => {
+    const file = directory && resolve(directory, "contours.geojson");
+    if (!file || !existsSync(file)) return res.status(404).end();
+    res.set("Cache-Control", "private, max-age=3600");
+    res.type("application/geo+json").sendFile(file, { dotfiles: "allow" });
   });
   router.get("/preview.png", (_, res) => {
     if (terrainCapability(directory).status === "missing")

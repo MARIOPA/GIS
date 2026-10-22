@@ -12,7 +12,7 @@ import tarfile
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = '0.2.0'
+VERSION = '0.3.0'
 CACHE = Path('/tmp/torrents-release-cache')
 PY_RELEASE = 'https://github.com/astral-sh/python-build-standalone/releases/download/20251014/'
 DOWNLOADS = {
@@ -189,15 +189,15 @@ def build(output):
             'windows_native_execution_tested': False, 'surface_bundled': False,
         }, indent=2) + '\n')
         zip_tree(destination, output / f'torrents-{system}-x64-{VERSION}.zip', destination.name + '/')
-    surface = ROOT / '.data/surfaces/pnoa-bal-462-4382-v1'
-    zip_tree(surface, output / 'mdt-piloto-v1.zip')
+    surface = ROOT / '.data/surfaces/pnoa-bal-462-4382-v2'
+    zip_tree(surface, output / 'mdt-piloto-v2.zip')
     handoff = output / 'SharePoint-Torrents'
     (handoff / 'LIDAR').mkdir(parents=True)
     (handoff / 'MDT').mkdir()
     lidar = ROOT / '.data/lidar/PNOA_2024_BAL_462-4382_H31_NPC03.laz'
     shutil.copy2(lidar, handoff / 'LIDAR' / lidar.name)
-    shutil.copy2(output / 'mdt-piloto-v1.zip', handoff / 'MDT/mdt-piloto-v1.zip')
-    shutil.copy2(output / 'mdt-piloto-v1.zip.sha256', handoff / 'MDT/mdt-piloto-v1.zip.sha256')
+    shutil.copy2(output / 'mdt-piloto-v2.zip', handoff / 'MDT/mdt-piloto-v2.zip')
+    shutil.copy2(output / 'mdt-piloto-v2.zip.sha256', handoff / 'MDT/mdt-piloto-v2.zip.sha256')
     shutil.copy2(ROOT / '.data/lidar/inspection.json', handoff / 'LIDAR/inspection.json')
     shutil.copy2(ROOT / 'docs/NOTA-LIDAR-A-MDT.md', handoff / 'INSTRUCCIONES-LIDAR-A-MDT.md')
     (handoff / 'LIDAR' / (lidar.name + '.sha256')).write_text(f'{digest(lidar)}  {lidar.name}\n')

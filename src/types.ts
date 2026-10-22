@@ -28,6 +28,9 @@ export type Project = {
   layers: Layer[];
   rainfall: number;
   terrainVisible?: boolean;
+  hillshadeVisible?: boolean;
+  contoursVisible?: boolean;
+  contourInterval?: 5 | 10 | 20;
   basemap: "local" | "streets" | "ortho";
   view: { center: number[]; zoom: number; bearing: number; pitch: number };
 };
@@ -89,6 +92,10 @@ export const INITIAL: Project = {
     },
   ],
   rainfall: 50,
+  terrainVisible: true,
+  hillshadeVisible: true,
+  contoursVisible: false,
+  contourInterval: 10,
   basemap: "streets",
   view: { center: [2.94, 39.65], zoom: 8.6, bearing: 0, pitch: 0 },
 };

@@ -2,7 +2,7 @@
 
 Aplicación SIG de gabinete para conservar y documentar torrentes en Baleares. React, TypeScript y MapLibre, con API Node/Express, proyectos en SQLite y sesiones privadas. Creada desde cero en `MARIOPA/GIS`; el prototipo del entorno anterior no estaba disponible y no se ha modificado `design-patterns`.
 
-Para instalar la versión 0.2.0 en Windows/Linux, usarla portable o cargar superficies de SharePoint, consulta la [guía de instaladores y superficies](docs/INSTALADORES-Y-SUPERFICIES.md). La [guía inicial](docs/GUIA-INSTALACION-Y-USO.md) describe la instalación del código 0.1.0.
+Para instalar la versión 0.3.0 en Windows/Linux, usarla portable o cargar superficies, consulta la [guía de instaladores y superficies](docs/INSTALADORES-Y-SUPERFICIES.md). La versión 0.3.0 separa la elevación y el sombreado y añade curvas de nivel seleccionables a 5, 10 o 20 m.
 
 ## Arranque
 
@@ -73,7 +73,7 @@ Variables opcionales: `PORT`, `HOST`, `DATA_DIR` (SQLite), `TERRAIN_DIR` (COG y 
 
 Consulta [arquitectura y alojamiento](docs/ARQUITECTURA.md), [informe del piloto](docs/pnoa/PILOTO.md) y [alcance respecto a SCALGO](docs/SCALGO-ALCANCE.md).
 
-# Instaladores y superficies 0.2.0
+# Instaladores y superficies 0.3.0
 
 Consulta [instalación Windows/Linux y uso portable](docs/INSTALADORES-Y-SUPERFICIES.md)
 y el [procedimiento real de LiDAR a MDT optimizado](docs/NOTA-LIDAR-A-MDT.md).

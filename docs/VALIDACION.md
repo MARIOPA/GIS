@@ -47,3 +47,11 @@ Capturas: [visor](screenshots/visor.png), [MDT real provisional](screenshots/mdt
 La optimización permite navegación por niveles de detalle. El MDT conserva su
 estado provisional y su referencia vertical pendiente; el motor de hidrología
 estática sigue pendiente de implementación y validación. Dynamic Flood excluido.
+
+# Ampliación 0.3.0: relieve y curvas de nivel (22-10-2026)
+
+- Elevación y sombreado se publican como capas raster XYZ independientes.
+- Se generan curvas vectoriales cada 5 m en WGS84; el visor filtra intervalos de
+  5, 10 o 20 m sin recalcular el MDT.
+- El COG mantiene exactamente las celdas y NoData del MDT v1.
+- Las capas son productos de visualización y no certifican el datum vertical.

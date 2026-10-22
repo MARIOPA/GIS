@@ -2346,6 +2346,22 @@ kbd {
   margin: 0 10px 5px;
   font-size: 9px;
 }
+.contour-control > label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: -3px 10px 8px 32px;
+  color: #8499a2;
+  font-size: 9px;
+}
+.contour-control select {
+  border: 1px solid #dce6e9;
+  border-radius: 4px;
+  background: #fff;
+  color: #526c78;
+  padding: 3px 18px 3px 6px;
+  font-size: 9px;
+}
 .profile-result {
   margin-top: 15px;
   border: 1px solid #e2ecee;

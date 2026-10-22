@@ -70,6 +70,9 @@ export const projectSchema = z
     layers: z.array(layerSchema).max(100),
     rainfall: z.number().min(0).max(500),
     terrainVisible: z.boolean().optional(),
+    hillshadeVisible: z.boolean().optional(),
+    contoursVisible: z.boolean().optional(),
+    contourInterval: z.union([z.literal(5), z.literal(10), z.literal(20)]).optional(),
     basemap: z.enum(["local", "streets", "ortho"]),
     view: z.object({
       center: position,

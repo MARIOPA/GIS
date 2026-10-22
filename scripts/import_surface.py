@@ -19,8 +19,8 @@ def validate_name(name):
     p = PurePosixPath(name)
     if not name or '\\' in name or ':' in name or p.is_absolute() or any(part in ('.', '..') for part in name.split('/')):
         raise ValueError('Ruta no permitida en el paquete.')
-    if p.suffix not in ('.json', '.tif', '.png'):
-        raise ValueError('El paquete de superficie solo admite TIFF, PNG y JSON.')
+    if p.suffix not in ('.json', '.geojson', '.tif', '.png'):
+        raise ValueError('El paquete de superficie solo admite TIFF, PNG y JSON/GeoJSON.')
     return p
 
 

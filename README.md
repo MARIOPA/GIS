@@ -1,5 +1,40 @@
 # Descargas de Torrents 0.2.0
 
+## Actualización 0.4.0: hidrología D8 y curvas de 0,25 m
+
+Si ya funciona Torrents 0.2.0/0.3.0, descarga
+`updates/0.4.0/actualizacion-torrents-0.4.0.zip`, extráelo dentro de
+`C:\Torrents\GIS-downloads` y ejecuta `ACTUALIZAR-TORRENTS-0.4.cmd`.
+
+El actualizador encuentra la carpeta `torrents-portable-windows-x64-0.2.0`,
+conserva sus proyectos, instala la aplicación 0.4.0 y deja seleccionada la
+superficie v3. El ZIP ya incluye el MDT v3; no hay que importarlo aparte.
+
+Novedades:
+
+- curvas de nivel de 0,25 m en teselas para la vista cercana;
+- relleno de depresiones mediante Priority-Flood;
+- dirección D8 y acumulación en área aportante;
+- red de flujo filtrable desde 0,25, 1 o 5 ha;
+- capas para visualizar acumulación y relleno de depresiones.
+
+SHA-256 de la actualización:
+
+```text
+3a9899adf7af04b19aad624926363db87da8ab14327949a805598f29c3bc06cb
+```
+
+La superficie independiente está en `updates/0.4.0/mdt-piloto-v3.zip` y su
+SHA-256 es:
+
+```text
+58c6ed06061bd1b188d508fe57263f1b33a52254c65abee455dfb860c3211017
+```
+
+Los resultados hidrológicos son topográficos y provisionales. El borde de la
+tesela se considera abierto; no incluyen lluvia, inundación, alcantarillas,
+puentes, edificios, rugosidad o infiltración.
+
 ## Actualización 0.3.0: relieve y curvas de nivel
 
 Quien ya tenga la aplicación 0.2.0 debe descargar únicamente
@@ -90,6 +125,6 @@ con runtimes oficiales x64 y su contenido se ha verificado, pero todavía falta 
 prueba completa en un ordenador Windows real. No es un instalador `.exe` firmado.
 
 El MDT piloto conserva celdas de 1,5 m y teselas multirresolución para visualizarlo
-con agilidad. Su datum vertical y precisión siguen pendientes de validación. La app
-permite visualizar, consultar cotas y perfiles; los análisis hidrológicos estáticos
-tipo cuencas, acumulación y depresiones todavía no están implementados.
+con agilidad. Su datum vertical y precisión siguen pendientes de validación. La
+versión 0.4.0 añade el análisis D8 provisional descrito arriba; el intervalo vertical
+de curvas de 0,25 m no aumenta la resolución horizontal del MDT.

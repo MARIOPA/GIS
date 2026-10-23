@@ -41,7 +41,34 @@ type Props = {
       bounds: [number, number, number, number];
       tile_size: number;
     };
-    contours?: { url: string; intervals: Array<5 | 10 | 20> };
+    contours?: {
+      url: string;
+      intervals: Array<0.25 | 5 | 10 | 20>;
+      fine?: {
+        tiles: string[];
+        minzoom: number;
+        maxzoom: number;
+        bounds: [number, number, number, number];
+        tile_size: number;
+      };
+    };
+    hydrology?: {
+      depressions: {
+        tiles: string[];
+        minzoom: number;
+        maxzoom: number;
+        bounds: [number, number, number, number];
+        tile_size: number;
+      };
+      accumulation: {
+        tiles: string[];
+        minzoom: number;
+        maxzoom: number;
+        bounds: [number, number, number, number];
+        tile_size: number;
+      };
+      network: { url: string };
+    };
   } | null;
   project: Project;
   tool: Tool;
@@ -321,6 +348,10 @@ export default forwardRef<MapHandle, Props>(function MapCanvas(props, ref) {
           "pilot-terrain",
           "pilot-hillshade",
           "pilot-contours",
+          "pilot-fine-contours",
+          "pilot-depressions",
+          "pilot-accumulation",
+          "pilot-flow-network",
           "sketches",
           "draft",
           "coast",
@@ -620,6 +651,31 @@ export default forwardRef<MapHandle, Props>(function MapCanvas(props, ref) {
         "sketch-fill",
       );
     }
+    if (props.terrain.contours.fine && !m.getSource("pilot-fine-contours")) {
+      const fine = props.terrain.contours.fine;
+      m.addSource("pilot-fine-contours", {
+        type: "raster",
+        tiles: fine.tiles.map((url) =>
+          new URL(url, window.location.origin).href
+            .replaceAll("%7B", "{")
+            .replaceAll("%7D", "}"),
+        ),
+        tileSize: fine.tile_size,
+        minzoom: fine.minzoom,
+        maxzoom: fine.maxzoom,
+        bounds: fine.bounds,
+      });
+      m.addLayer(
+        {
+          id: "pilot-fine-contours",
+          type: "raster",
+          source: "pilot-fine-contours",
+          minzoom: 14,
+          paint: { "raster-opacity": 0.7, "raster-fade-duration": 0 },
+        },
+        "sketch-fill",
+      );
+    }
     const interval = props.project.contourInterval || 10;
     m.setFilter("pilot-contours", [
       "==",
@@ -629,12 +685,100 @@ export default forwardRef<MapHandle, Props>(function MapCanvas(props, ref) {
     m.setLayoutProperty(
       "pilot-contours",
       "visibility",
-      props.project.contoursVisible ? "visible" : "none",
+      props.project.contoursVisible && interval !== 0.25 ? "visible" : "none",
     );
+    if (m.getLayer("pilot-fine-contours"))
+      m.setLayoutProperty(
+        "pilot-fine-contours",
+        "visibility",
+        props.project.contoursVisible && interval === 0.25
+          ? "visible"
+          : "none",
+      );
   }, [
     props.terrain,
     props.project.contoursVisible,
     props.project.contourInterval,
+    ready,
+  ]);
+  useEffect(() => {
+    const m = mapRef.current;
+    const hydrology = props.terrain?.hydrology;
+    if (!m?.getSource("sketches") || !hydrology) return;
+    const rasterLayers = [
+      ["pilot-depressions", hydrology.depressions],
+      ["pilot-accumulation", hydrology.accumulation],
+    ] as const;
+    for (const [id, raster] of rasterLayers) {
+      if (!m.getSource(id)) {
+        m.addSource(id, {
+          type: "raster",
+          tiles: raster.tiles.map((url) =>
+            new URL(url, window.location.origin).href
+              .replaceAll("%7B", "{")
+              .replaceAll("%7D", "}"),
+          ),
+          tileSize: raster.tile_size,
+          minzoom: raster.minzoom,
+          maxzoom: raster.maxzoom,
+          bounds: raster.bounds,
+        });
+        m.addLayer(
+          {
+            id,
+            type: "raster",
+            source: id,
+            paint: { "raster-opacity": 0.82, "raster-fade-duration": 0 },
+          },
+          "sketch-fill",
+        );
+      }
+    }
+    if (!m.getSource("pilot-flow-network")) {
+      m.addSource("pilot-flow-network", {
+        type: "geojson",
+        data: hydrology.network.url,
+      });
+      m.addLayer(
+        {
+          id: "pilot-flow-network",
+          type: "line",
+          source: "pilot-flow-network",
+          minzoom: 12,
+          paint: {
+            "line-color": "#087fa5",
+            "line-opacity": 0.9,
+            "line-width": ["interpolate", ["linear"], ["zoom"], 12, 0.8, 17, 2.2],
+          },
+        },
+        "sketch-fill",
+      );
+    }
+    m.setLayoutProperty(
+      "pilot-depressions",
+      "visibility",
+      props.project.depressionsVisible ? "visible" : "none",
+    );
+    m.setLayoutProperty(
+      "pilot-accumulation",
+      "visibility",
+      props.project.flowVisible ? "visible" : "none",
+    );
+    m.setLayoutProperty(
+      "pilot-flow-network",
+      "visibility",
+      props.project.flowVisible ? "visible" : "none",
+    );
+    m.setFilter("pilot-flow-network", [
+      ">=",
+      ["get", "area_m2"],
+      (props.project.flowThresholdHa || 1) * 10000,
+    ]);
+  }, [
+    props.terrain,
+    props.project.flowVisible,
+    props.project.depressionsVisible,
+    props.project.flowThresholdHa,
     ready,
   ]);
   useEffect(() => {

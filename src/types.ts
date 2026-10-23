@@ -30,7 +30,10 @@ export type Project = {
   terrainVisible?: boolean;
   hillshadeVisible?: boolean;
   contoursVisible?: boolean;
-  contourInterval?: 5 | 10 | 20;
+  contourInterval?: 0.25 | 5 | 10 | 20;
+  flowVisible?: boolean;
+  depressionsVisible?: boolean;
+  flowThresholdHa?: 0.25 | 1 | 5;
   basemap: "local" | "streets" | "ortho";
   view: { center: number[]; zoom: number; bearing: number; pitch: number };
 };
@@ -96,6 +99,9 @@ export const INITIAL: Project = {
   hillshadeVisible: true,
   contoursVisible: false,
   contourInterval: 10,
+  flowVisible: false,
+  depressionsVisible: false,
+  flowThresholdHa: 1,
   basemap: "streets",
   view: { center: [2.94, 39.65], zoom: 8.6, bearing: 0, pitch: 0 },
 };

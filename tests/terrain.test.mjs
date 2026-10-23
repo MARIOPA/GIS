@@ -43,6 +43,11 @@ print(json.dumps({'point':transform.transform(462010.5,4381989.5),'line':[transf
   const hillshadeDir = join(directory, "hillshade/2/1");
   mkdirSync(hillshadeDir, { recursive: true });
   writeFileSync(join(hillshadeDir, "1.png"), png);
+  for (const folder of ["fine-contours", "depressions", "accumulation"]) {
+    const path = join(directory, folder, "2/1");
+    mkdirSync(path, { recursive: true });
+    writeFileSync(join(path, "1.png"), png);
+  }
   writeFileSync(
     join(directory, "tiles.json"),
     JSON.stringify({
@@ -64,6 +69,17 @@ print(json.dumps({'point':transform.transform(462010.5,4381989.5),'line':[transf
     }),
   );
   writeFileSync(
+    join(directory, "fine-contours.json"),
+    JSON.stringify({
+      minzoom: 2,
+      maxzoom: 2,
+      bounds: [-90, 0, 0, 66],
+      tile_size: 256,
+      count: 1,
+      interval_m: 0.25,
+    }),
+  );
+  writeFileSync(
     join(directory, "contours.geojson"),
     JSON.stringify({
       type: "FeatureCollection",
@@ -74,6 +90,31 @@ print(json.dumps({'point':transform.transform(462010.5,4381989.5),'line':[transf
           geometry: { type: "LineString", coordinates: [[2.5, 39.5], [2.6, 39.6]] },
         },
       ],
+    }),
+  );
+  writeFileSync(
+    join(directory, "flow-network.geojson"),
+    JSON.stringify({
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          properties: { area_m2: 10000 },
+          geometry: { type: "LineString", coordinates: [[2.5, 39.5], [2.6, 39.6]] },
+        },
+      ],
+    }),
+  );
+  writeFileSync(
+    join(directory, "hydrology.json"),
+    JSON.stringify({
+      algorithm: "TEST D8",
+      filled_cells: 2,
+      maximum_fill_depth_m: 1,
+      fill_volume_m3: 4,
+      maximum_contributing_area_m2: 10000,
+      network_segments: 1,
+      limitations: "TEST ONLY",
     }),
   );
   const db = openStore(join(directory, "db"));
@@ -100,7 +141,8 @@ print(json.dumps({'point':transform.transform(462010.5,4381989.5),'line':[transf
   assert.deepEqual(capabilities.terrain.hillshade.tiles, [
     "/api/terrain/hillshade/{z}/{x}/{y}.png",
   ]);
-  assert.deepEqual(capabilities.terrain.contours.intervals, [5, 10, 20]);
+  assert.deepEqual(capabilities.terrain.contours.intervals, [0.25, 5, 10, 20]);
+  assert.equal(capabilities.terrain.hydrology.algorithm, "TEST D8");
   const tile = await fetch(base + "/api/terrain/tiles/2/1/1.png");
   assert.equal(tile.status, 200);
   assert.equal(tile.headers.get("content-type"), "image/png");
@@ -109,6 +151,11 @@ print(json.dumps({'point':transform.transform(462010.5,4381989.5),'line':[transf
   assert.equal((await fetch(base + "/api/terrain/hillshade/2/1/1.png")).status, 200);
   const contours = await (await fetch(base + "/api/terrain/contours.geojson")).json();
   assert.equal(contours.features[0].properties.elevation, 100);
+  assert.equal((await fetch(base + "/api/terrain/fine-contours/2/1/1.png")).status, 200);
+  assert.equal((await fetch(base + "/api/terrain/depressions/2/1/1.png")).status, 200);
+  assert.equal((await fetch(base + "/api/terrain/accumulation/2/1/1.png")).status, 200);
+  const network = await (await fetch(base + "/api/terrain/flow-network.geojson")).json();
+  assert.equal(network.features[0].properties.area_m2, 10000);
   assert.equal(
     (await fetch(base + "/api/terrain/tiles/2/2/1.png")).status,
     204,

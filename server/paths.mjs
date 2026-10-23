@@ -27,7 +27,11 @@ export function surfaceDirectory(dataDir) {
       throw new Error("Identificador de superficie inválido.");
     return resolve(dataDir, "surfaces", id);
   }
-  for (const id of ["pnoa-bal-462-4382-v2", "pnoa-bal-462-4382-v1"]) {
+  for (const id of [
+    "pnoa-bal-462-4382-v3",
+    "pnoa-bal-462-4382-v2",
+    "pnoa-bal-462-4382-v1",
+  ]) {
     const optimized = resolve(dataDir, "surfaces", id);
     if (existsSync(resolve(optimized, "surface.json"))) return optimized;
   }

@@ -1,4 +1,4 @@
-# Torrents 0.3.0: instalar, abrir y cargar un MDT
+# Torrents 0.4.0: instalar, abrir y cargar un MDT
 
 La app y las superficies se distribuyen por separado. Los paquetes de aplicación
 incluyen Node.js 24.19.0, Python 3.12.12 y las bibliotecas de consulta. No necesitan
@@ -9,13 +9,13 @@ No incluyen LiDAR, MDT, usuarios, contraseñas ni proyectos personales.
 
 | Archivo                          | Uso                                                                            |
 | -------------------------------- | ------------------------------------------------------------------------------ |
-| `torrents-windows-x64-0.3.0.zip` | Windows 10/11 de 64 bits, instalación o portable                               |
-| `torrents-linux-x64-0.3.0.zip`   | Linux x64 con glibc 2.28 o posterior, instalación o portable                   |
-| `mdt-piloto-v2.zip`              | MDT, sombreado y curvas de nivel de la zona piloto                             |
+| `torrents-windows-x64-0.4.0.zip` | Windows 10/11 de 64 bits, instalación o portable                               |
+| `torrents-linux-x64-0.4.0.zip`   | Linux x64 con glibc 2.28 o posterior, instalación o portable                   |
+| `mdt-piloto-v3.zip`              | MDT, curvas, sombreado e hidrología topográfica provisional                    |
 | `SharePoint-LIDAR-y-MDT.zip`     | Entrega para el propietario: original LiDAR, paquete MDT y nota de preparación |
-| `torrents-codigo-0.3.0.zip`      | Código para desarrollo; no es el instalador de usuario                         |
+| `torrents-codigo-0.4.0.zip`      | Código para desarrollo; no es el instalador de usuario                         |
 
-También se entrega `torrents-portable-windows-x64-0.3.0.zip`: la versión Windows
+También se entrega `torrents-portable-windows-x64-0.4.0.zip`: la versión Windows
 sin instalador, para abrir directamente desde una carpeta o USB.
 
 Los dos primeros ZIP sirven también como **portables**: se descomprimen en una
@@ -31,12 +31,12 @@ en Windows 10. Los lanzadores `.cmd` no son instaladores `.exe` firmados.
 
 ## Windows 10/11
 
-1. Descarga y **descomprime completamente** `torrents-windows-x64-0.3.0.zip`.
+1. Descarga y **descomprime completamente** `torrents-windows-x64-0.4.0.zip`.
    No abras los lanzadores desde dentro del ZIP.
 2. Para instalar, haz doble clic en `Instalar-Windows.cmd`. Copia la app a
-   `%LOCALAPPDATA%\Torrents\0.3.0` y crea un acceso directo en el escritorio.
+   `%LOCALAPPDATA%\Torrents\0.4.0` y crea un acceso directo en el escritorio.
    No requiere permisos de administrador y no cambia las políticas de PowerShell.
-3. En la carpeta instalada abre `Importar-MDT.cmd` y elige `mdt-piloto-v2.zip`.
+3. En la carpeta instalada abre `Importar-MDT.cmd` y elige `mdt-piloto-v3.zip`.
 4. Abre `Torrents` desde el escritorio o `Abrir-Torrents.cmd` en esa carpeta.
 5. Se abrirá el navegador. Mantén abierta la ventana del servidor mientras trabajas;
    usa `Ctrl+C` para detenerlo.
@@ -49,7 +49,7 @@ PowerShell, utiliza una ubicación y un método autorizados por su administrador
 
 ## Linux
 
-Descomprime `torrents-linux-x64-0.3.0.zip` y abre una terminal en la carpeta extraída.
+Descomprime `torrents-linux-x64-0.4.0.zip` y abre una terminal en la carpeta extraída.
 Ubuntu 22.04/24.04 o Debian 12 x64 son ejemplos del sistema requerido. La ejecución
 también necesita las bibliotecas habituales del sistema, como glibc y libstdc++.
 
@@ -60,10 +60,10 @@ bash instalar-linux.sh
 ```
 
 El instalador muestra la ruta de destino. Por defecto es
-`~/.local/share/torrents/0.3.0` (respeta `XDG_DATA_HOME`). Desde esa carpeta:
+`~/.local/share/torrents/0.4.0` (respeta `XDG_DATA_HOME`). Desde esa carpeta:
 
 ```bash
-bash importar-mdt.sh "/ruta/a/mdt-piloto-v2.zip"
+bash importar-mdt.sh "/ruta/a/mdt-piloto-v3.zip"
 bash abrir-torrents.sh
 ```
 
@@ -101,10 +101,15 @@ Puedes dibujar, medir, añadir fotos, guardar proyectos y consultar cotas/perfil
 Las cotas y perfiles se leen del COG nativo. Las imágenes de colores y los niveles
 reducidos son exclusivamente para visualizar; no se emplean como cotas de cálculo.
 
-El MDT piloto es provisional: datum vertical y exactitud no validados. El motor
-hidrológico estático de cuencas, acumulación, depresiones y llenado/desbordamiento
-sigue pendiente. Dynamic Flood está excluido. Tener un MDT optimizado no genera
-por sí solo esos análisis ni garantiza el rendimiento de otro producto.
+El MDT piloto es provisional: datum vertical y exactitud no validados. La versión
+0.4.0 incluye acondicionamiento Priority-Flood, dirección D8, acumulación, relleno
+de depresiones y una red de flujo topográfica. El borde de esta tesela se considera
+abierto y no se incorporan alcantarillas, puentes, edificios, rugosidad, infiltración
+ni lluvia. No calcula inundación, cuencas ni Dynamic Flood.
+
+Las curvas de 0,25 m son una capa de visualización preparada en teselas y aparecen
+al acercarse al mapa. Su intervalo vertical de 0,25 m no aumenta la resolución
+horizontal ni la exactitud del MDT original, que sigue teniendo celdas de 1,5 m.
 
 ## Datos de SharePoint
 
@@ -117,8 +122,8 @@ Torrents/
 │   ├── PNOA_2024_BAL_462-4382_H31_NPC03.laz.sha256
 │   └── inspection.json
 ├── MDT/
-│   ├── mdt-piloto-v2.zip
-│   └── mdt-piloto-v2.zip.sha256
+│   ├── mdt-piloto-v3.zip
+│   └── mdt-piloto-v3.zip.sha256
 └── INSTRUCCIONES-LIDAR-A-MDT.md
 ```
 
@@ -132,7 +137,7 @@ acceso a `MDT`, no al LiDAR original. Comparte con las personas concretas y veri
 que puedan descargar. Dar acceso al GitHub privado permite obtener el código;
 no concede acceso a SharePoint ni a la aplicación desplegada.
 
-Cada usuario descarga `mdt-piloto-v2.zip` y lo importa. Es una copia local, no una
+Cada usuario descarga `mdt-piloto-v3.zip` y lo importa. Es una copia local, no una
 lectura directa de teselas desde SharePoint. Funciona también con una carpeta de
 superficie sincronizada con OneDrive y marcada **Mantener siempre en este dispositivo**.
 Esa carpeta debe contener `surface.json`, `checksums.json`, `dtm.tif` y `tiles/`:
@@ -169,7 +174,7 @@ carpeta-de-la-app/
 │   ├── torrents.sqlite       # Proyectos y posibles cuentas de esta copia
 │   ├── surface-selection.json
 │   └── surfaces/
-│       └── pnoa-bal-462-4382-v2/
+│       └── pnoa-bal-462-4382-v3/
 │           ├── dtm.tif
 │           ├── surface.json
 │           ├── checksums.json

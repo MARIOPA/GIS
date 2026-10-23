@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 torrents_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-destination="${1:-${XDG_DATA_HOME:-$HOME/.local/share}/torrents/0.3.0}"
+destination="${1:-${XDG_DATA_HOME:-$HOME/.local/share}/torrents/0.4.0}"
 destination="$(realpath -m -- "$destination")"
 if [[ "$destination" == "$torrents_dir" || "$destination" == "$torrents_dir/"* ]]; then
   echo 'Elige un destino fuera de la carpeta portable original.'

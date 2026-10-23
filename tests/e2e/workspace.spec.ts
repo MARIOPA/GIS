@@ -12,6 +12,8 @@ const point = {
 test("Terrain requests numeric XYZ tiles and changes detail when zooming", async ({
   page,
 }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
   const png = await page.evaluate(() => {
     const canvas = document.createElement("canvas");
     canvas.width = canvas.height = 256;
@@ -54,7 +56,38 @@ test("Terrain requests numeric XYZ tiles and changes detail when zooming", async
           },
           contours: {
             url: "/api/terrain/contours.geojson",
-            intervals: [5, 10, 20],
+            intervals: [0.25, 5, 10, 20],
+            fine: {
+              tiles: ["/api/terrain/fine-contours/{z}/{x}/{y}.png"],
+              minzoom: 8,
+              maxzoom: 17,
+              bounds: [2.557, 39.577, 2.57, 39.587],
+              tile_size: 256,
+            },
+          },
+          hydrology: {
+            algorithm: "TEST D8",
+            filled_cells: 12,
+            maximum_fill_depth_m: 1.25,
+            fill_volume_m3: 42,
+            maximum_contributing_area_m2: 60000,
+            network_segments: 8,
+            limitations: "TEST ONLY",
+            depressions: {
+              tiles: ["/api/terrain/depressions/{z}/{x}/{y}.png"],
+              minzoom: 8,
+              maxzoom: 17,
+              bounds: [2.557, 39.577, 2.57, 39.587],
+              tile_size: 256,
+            },
+            accumulation: {
+              tiles: ["/api/terrain/accumulation/{z}/{x}/{y}.png"],
+              minzoom: 8,
+              maxzoom: 17,
+              bounds: [2.557, 39.577, 2.57, 39.587],
+              tile_size: 256,
+            },
+            network: { url: "/api/terrain/flow-network.geojson" },
           },
         },
       },
@@ -80,10 +113,20 @@ test("Terrain requests numeric XYZ tiles and changes detail when zooming", async
       body: Buffer.from(png, "base64"),
     }),
   );
+  for (const layer of ["fine-contours", "depressions", "accumulation"])
+    await page.route(`**/api/terrain/${layer}/**`, (route) =>
+      route.fulfill({
+        contentType: "image/png",
+        body: Buffer.from(png, "base64"),
+      }),
+    );
   await page.route("**/api/terrain/contours.geojson", (route) =>
     route.fulfill({
       json: { type: "FeatureCollection", features: [] },
     }),
+  );
+  await page.route("**/api/terrain/flow-network.geojson", (route) =>
+    route.fulfill({ json: { type: "FeatureCollection", features: [] } }),
   );
   await ready(page);
   const focus = page.getByRole("button", {
@@ -96,13 +139,19 @@ test("Terrain requests numeric XYZ tiles and changes detail when zooming", async
     page.getByRole("button", { name: /Relieve sombreado/ }),
   ).toBeVisible();
   await page.getByRole("button", { name: /Curvas de nivel/ }).click();
-  await page.getByLabel("Intervalo de curvas de nivel").selectOption("5");
+  await page.getByLabel("Intervalo de curvas de nivel").selectOption("0.25");
+  await page.getByRole("button", { name: /Red de flujo Disponible/ }).click();
+  await expect(page.getByText("Flujo topográfico D8")).toBeVisible();
+  await page.getByLabel("Área mínima de la red de flujo").selectOption("0.25");
+  await page.getByRole("button", { name: /Depresiones Disponible/ }).click();
+  await expect(page.getByText("Relleno de depresiones")).toBeVisible();
   await focus.click();
   await expect.poll(() => zooms.has(15)).toBe(true);
   await page.locator(".maplibregl-canvas").hover();
   await page.mouse.wheel(0, -650);
   await expect.poll(() => [...zooms].some((z) => z > 15)).toBe(true);
   expect(invalid).toEqual([]);
+  expect(errors).toEqual([]);
 });
 async function ready(page) {
   await page.goto("/");

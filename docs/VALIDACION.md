@@ -55,3 +55,12 @@ estática sigue pendiente de implementación y validación. Dynamic Flood exclui
   5, 10 o 20 m sin recalcular el MDT.
 - El COG mantiene exactamente las celdas y NoData del MDT v1.
 - Las capas son productos de visualización y no certifican el datum vertical.
+
+# Ampliación 0.4.0: hidrología estática provisional (23-10-2026)
+
+- Curvas de 0,25 m rasterizadas en teselas para evitar enviar 63 MB de GeoJSON.
+- Acondicionamiento Priority-Flood y dirección D8 de una salida por celda.
+- Acumulación en área aportante, red filtrable desde 0,25 ha y depresiones.
+- El piloto produjo 1.048 celdas rellenadas y 4.412 segmentos base. El borde de
+  la tesela se considera abierto; no se modelan alcantarillas, puentes, edificios,
+  rugosidad, lluvia ni inundación.

@@ -12,6 +12,7 @@ import tempfile
 import numpy as np
 import rasterio
 from rasterio.enums import Resampling
+from rasterio.features import rasterize
 from rasterio.shutil import copy as raster_copy
 from rasterio.transform import from_bounds
 from rasterio.vrt import WarpedVRT
@@ -134,6 +135,24 @@ def optimize(source, output, minzoom=8, maxzoom=17):
             (output / 'contours.geojson').write_text(json.dumps({
                 'type': 'FeatureCollection', 'features': features,
             }, ensure_ascii=False, separators=(',', ':')) + '\n', encoding='utf-8')
+            fine_projected = Path(work) / 'contours-025.geojson'
+            subprocess.run([
+                'gdal_contour', '-q', '-a', 'elevation', '-i', '0.25',
+                '-f', 'GeoJSON', str(output / 'dtm.tif'), str(fine_projected),
+            ], check=True)
+            fine = json.loads(fine_projected.read_text(encoding='utf-8'))
+            fine_mask = rasterize(
+                ((feature['geometry'], 1) for feature in fine['features']),
+                out_shape=src.shape, transform=src.transform, fill=0,
+                all_touched=False, dtype='uint8',
+            )
+            fine_rgba = np.dstack([
+                np.full(src.shape, 43, dtype='uint8'),
+                np.full(src.shape, 72, dtype='uint8'),
+                np.full(src.shape, 78, dtype='uint8'),
+                fine_mask * 135,
+            ])
+            write_tiles(fine_rgba, 'fine-contours')
     for name in ('manifest.json', 'preview.png', 'preview.json'):
         shutil.copy2(source / name, output / name)
     with rasterio.open(output / 'dtm.tif') as optimized, rasterio.open(source / 'dtm.tif') as original:
@@ -147,12 +166,15 @@ def optimize(source, output, minzoom=8, maxzoom=17):
     (output / 'tiles.json').write_text(json.dumps(tile_info, indent=2) + '\n', encoding='utf-8')
     hillshade_info = {**tile_info, 'purpose': 'display_hillshade_only'}
     (output / 'hillshade.json').write_text(json.dumps(hillshade_info, indent=2) + '\n', encoding='utf-8')
-    report = {'id': 'pnoa-bal-462-4382-v2', 'schema_version': 1,
+    fine_contours_info = {**tile_info, 'interval_m': 0.25, 'purpose': 'display_contours_only'}
+    (output / 'fine-contours.json').write_text(json.dumps(fine_contours_info, indent=2) + '\n', encoding='utf-8')
+    report = {'id': 'pnoa-bal-462-4382-v3', 'schema_version': 1,
               'source_laz_sha256': manifest['source_inspection']['sha256'],
               'original_dtm_sha256': sha256(source / 'dtm.tif'), 'dtm_sha256': sha256(output / 'dtm.tif'),
               'native_values_unchanged': True, 'native_resolution_m': manifest['resolution_m'],
               'cog_overviews': actual_factors, 'tiles': tile_info, 'hillshade': hillshade_info,
-              'contours': {'minimum_interval_m': 5, 'feature_count': len(features)},
+              'contours': {'minimum_interval_m': 0.25, 'vector_minimum_interval_m': 5,
+                           'feature_count': len(features), 'fine_feature_count': len(fine['features'])},
               'hydrology_ready': False, 'validation': manifest['status'],
               'vertical_reference': manifest['vertical_reference']}
     (output / 'surface.json').write_text(json.dumps(report, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')

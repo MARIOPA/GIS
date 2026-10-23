@@ -119,7 +119,41 @@ type Terrain = {
     bounds: [number, number, number, number];
     tile_size: number;
   };
-  contours?: { url: string; intervals: Array<5 | 10 | 20> };
+  contours?: {
+    url: string;
+    intervals: Array<0.25 | 5 | 10 | 20>;
+    fine?: {
+      tiles: string[];
+      minzoom: number;
+      maxzoom: number;
+      bounds: [number, number, number, number];
+      tile_size: number;
+    };
+  };
+  hydrology?: {
+    algorithm: string;
+    filled_cells: number;
+    maximum_fill_depth_m: number;
+    fill_volume_m3: number;
+    maximum_contributing_area_m2: number;
+    network_segments: number;
+    limitations: string;
+    depressions: {
+      tiles: string[];
+      minzoom: number;
+      maxzoom: number;
+      bounds: [number, number, number, number];
+      tile_size: number;
+    };
+    accumulation: {
+      tiles: string[];
+      minzoom: number;
+      maxzoom: number;
+      bounds: [number, number, number, number];
+      tile_size: number;
+    };
+    network: { url: string };
+  };
   coordinates: number[][];
   center: number[];
   resolution_m: number;
@@ -915,15 +949,33 @@ export default function App() {
                             setAnalysis(item.id);
                             setTool("navigate");
                             setRight(true);
+                            if (terrain?.hydrology && item.id !== "flood")
+                              update((p) => ({
+                                ...p,
+                                flowVisible:
+                                  item.id === "flow"
+                                    ? !p.flowVisible
+                                    : false,
+                                depressionsVisible:
+                                  item.id === "depressions"
+                                    ? !p.depressionsVisible
+                                    : false,
+                              }));
                           }}
                         >
                           <item.icon size={15} />
                           <span>{item.name}</span>
-                          <span className="status-chip">Sin datos</span>
+                          <span className="status-chip">
+                            {terrain?.hydrology && item.id !== "flood"
+                              ? "Disponible"
+                              : "Sin datos"}
+                          </span>
                         </button>
                       ))}
                       <p className="category-note">
-                        Análisis pendientes de MDT validado.
+                        {terrain?.hydrology
+                          ? "D8 topográfico provisional. La lluvia y la inundación siguen pendientes."
+                          : "Análisis pendientes de MDT validado."}
                       </p>
                     </>,
                   )}
@@ -1029,7 +1081,8 @@ export default function App() {
                                   contourInterval: Number(event.target.value) as
                                     | 5
                                     | 10
-                                    | 20,
+                                    | 20
+                                    | 0.25,
                                 }))
                               }
                             >
@@ -1672,7 +1725,11 @@ export default function App() {
                           ? "Define el trazado de un perfil sobre el terreno."
                           : tool === "watershed"
                             ? "Identifica el área que aporta agua a un punto."
-                            : "Explora la respuesta del territorio a un episodio de lluvia."}
+                            : analysis === "flow"
+                              ? "Visualiza la dirección D8, la acumulación y la red de drenaje derivadas del MDT acondicionado."
+                              : analysis === "depressions"
+                                ? "Visualiza las celdas elevadas durante el relleno topográfico de depresiones."
+                                : "Explora la respuesta del territorio a un episodio de lluvia."}
                     </p>
                     <span className="data-status">
                       <span />{" "}
@@ -1680,9 +1737,11 @@ export default function App() {
                         ? terrain
                           ? "Coordenadas · Z nativa provisional"
                           : "Coordenadas disponibles"
-                        : terrain
-                          ? "MDT provisional · análisis pendiente"
-                          : "Sin modelo de terreno"}
+                        : terrain?.hydrology && analysis !== "flood"
+                          ? "D8 provisional · resultado disponible"
+                          : terrain
+                            ? "MDT provisional · análisis pendiente"
+                            : "Sin modelo de terreno"}
                     </span>
                   </div>
                   {tool === "query" || tool === "watershed" ? (
@@ -1749,6 +1808,122 @@ export default function App() {
                         herramienta Profile.
                       </p>
                     </div>
+                  ) : analysis !== "flood" && terrain?.hydrology ? (
+                    <>
+                      <div className="parameter-section">
+                        <div className="section-title">
+                          {analysis === "flow" ? (
+                            <Spline size={16} />
+                          ) : (
+                            <Waves size={16} />
+                          )}
+                          <h3>
+                            {analysis === "flow"
+                              ? "Flujo topográfico D8"
+                              : "Relleno de depresiones"}
+                          </h3>
+                          <Info size={13} />
+                        </div>
+                        <button
+                          className="secondary hydrology-toggle"
+                          onClick={() =>
+                            update((p) => ({
+                              ...p,
+                              flowVisible:
+                                analysis === "flow"
+                                  ? !p.flowVisible
+                                  : p.flowVisible,
+                              depressionsVisible:
+                                analysis === "depressions"
+                                  ? !p.depressionsVisible
+                                  : p.depressionsVisible,
+                            }))
+                          }
+                        >
+                          {analysis === "flow" ? (
+                            project.flowVisible ? (
+                              <EyeOff size={13} />
+                            ) : (
+                              <Eye size={13} />
+                            )
+                          ) : project.depressionsVisible ? (
+                            <EyeOff size={13} />
+                          ) : (
+                            <Eye size={13} />
+                          )}
+                          {analysis === "flow"
+                            ? project.flowVisible
+                              ? "Ocultar acumulación y red"
+                              : "Mostrar acumulación y red"
+                            : project.depressionsVisible
+                              ? "Ocultar depresiones"
+                              : "Mostrar depresiones"}
+                        </button>
+                        {analysis === "flow" && (
+                          <label className="hydrology-select">
+                            Área mínima de la red
+                            <select
+                              aria-label="Área mínima de la red de flujo"
+                              value={project.flowThresholdHa || 1}
+                              onChange={(event) =>
+                                update((p) => ({
+                                  ...p,
+                                  flowThresholdHa: Number(event.target.value) as
+                                    | 0.25
+                                    | 1
+                                    | 5,
+                                }))
+                              }
+                            >
+                              <option value="0.25">0,25 ha</option>
+                              <option value="1">1 ha</option>
+                              <option value="5">5 ha</option>
+                            </select>
+                          </label>
+                        )}
+                      </div>
+                      <div className="parameter-section">
+                        <h3>Resumen del cálculo</h3>
+                        <dl className="properties hydrology-stats">
+                          {analysis === "flow" ? (
+                            <>
+                              <dt>Dirección</dt>
+                              <dd>D8, una salida por celda</dd>
+                              <dt>Área máxima aportante</dt>
+                              <dd>
+                                {(
+                                  terrain.hydrology
+                                    .maximum_contributing_area_m2 / 10000
+                                ).toFixed(2)}{" "}
+                                ha
+                              </dd>
+                              <dt>Segmentos base</dt>
+                              <dd>{terrain.hydrology.network_segments}</dd>
+                            </>
+                          ) : (
+                            <>
+                              <dt>Celdas rellenadas</dt>
+                              <dd>{terrain.hydrology.filled_cells}</dd>
+                              <dt>Profundidad máxima</dt>
+                              <dd>
+                                {terrain.hydrology.maximum_fill_depth_m.toFixed(
+                                  3,
+                                )}{" "}
+                                m
+                              </dd>
+                              <dt>Volumen de relleno</dt>
+                              <dd>
+                                {terrain.hydrology.fill_volume_m3.toFixed(1)} m³
+                              </dd>
+                            </>
+                          )}
+                        </dl>
+                        <div className="parameter-callout">
+                          <Info size={14} />
+                          <p>{terrain.hydrology.limitations}</p>
+                        </div>
+                      </div>
+                    </>
                   ) : (
                     <>
                       <div className="parameter-section">

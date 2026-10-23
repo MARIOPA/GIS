@@ -50,13 +50,13 @@ def exercise(root, browser_output=None):
                 time.sleep(0.1)
         else:
             raise RuntimeError('Timeout de arranque del paquete.')
-        assert health['version'] == '0.3.0'
+        assert health['version'] == '0.4.0'
         assert json.loads(request('/api/session'))['authenticated']
         assert b'<div id="root"' in request('/')
         terrain = json.loads(request('/api/capabilities'))['terrain']
         assert terrain['raster']['count'] == 50
         assert terrain['raster']['maxzoom'] == 17
-        active = root / '.data/surfaces/pnoa-bal-462-4382-v2'
+        active = root / '.data/surfaces/pnoa-bal-462-4382-v3'
         tiles = []
         for z in [8, 12, 15, 17]:
             file = next((active / 'tiles' / str(z)).rglob('*.png'))
@@ -133,7 +133,7 @@ def verify(output):
     with tempfile.TemporaryDirectory(prefix='torrents-paquete-') as temporary:
         base = Path(temporary) / 'prueba con espacios y ñ'
         base.mkdir()
-        package = output / 'torrents-linux-x64-0.3.0.zip'
+        package = output / 'torrents-linux-x64-0.4.0.zip'
         with zipfile.ZipFile(package) as archive:
             assert archive.testzip() is None
             for info in archive.infolist():
@@ -141,14 +141,14 @@ def verify(output):
                 mode = (info.external_attr >> 16) & 0o777
                 if mode:
                     (base / info.filename).chmod(mode)
-        portable = base / 'torrents-linux-x64-0.3.0'
+        portable = base / 'torrents-linux-x64-0.4.0'
         run([portable / 'runtime/python/bin/python3', '-c', 'import rasterio,numpy,pyproj'])
-        run(['bash', portable / 'importar-mdt.sh', output / 'mdt-piloto-v2.zip'])
+        run(['bash', portable / 'importar-mdt.sh', output / 'mdt-piloto-v3.zip'])
         report['portable'] = exercise(portable, output / 'mdt-multirresolucion.png')
         target = base / 'perfil instalado'
         installed = run(['bash', portable / 'instalar-linux.sh', target])
         assert not (target / '.data').exists(), 'El instalador copió datos personales de la copia original.'
-        run(['bash', target / 'importar-mdt.sh', output / 'mdt-piloto-v2.zip'])
+        run(['bash', target / 'importar-mdt.sh', output / 'mdt-piloto-v3.zip'])
         report['installed'] = exercise(target)
         rejected = subprocess.run(['bash', portable / 'instalar-linux.sh', target], text=True, capture_output=True)
         assert rejected.returncode != 0
@@ -157,7 +157,7 @@ def verify(output):
         assert restricted.returncode != 0 and 'localhost' in restricted.stderr
         report['existing_install_preserved'] = True
         report['local_mode_refuses_network_binding'] = True
-    for name in ['torrents-windows-x64-0.3.0.zip', 'torrents-portable-windows-x64-0.3.0.zip']:
+    for name in ['torrents-windows-x64-0.4.0.zip', 'torrents-portable-windows-x64-0.4.0.zip']:
         with zipfile.ZipFile(output / name) as archive:
             assert archive.testzip() is None
             names = archive.namelist()

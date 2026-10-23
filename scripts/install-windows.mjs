@@ -11,7 +11,7 @@ import { appRoot } from "../server/paths.mjs";
 if (process.platform !== "win32" || process.arch !== "x64")
   throw new Error("Se necesita Windows 10/11 x64.");
 const target = resolve(
-  process.argv[2] || join(process.env.LOCALAPPDATA, "Torrents", "0.3.0"),
+  process.argv[2] || join(process.env.LOCALAPPDATA, "Torrents", "0.4.0"),
 );
 const rel = relative(appRoot, target);
 if (!rel || (!rel.startsWith("..") && !isAbsolute(rel)))

@@ -72,7 +72,10 @@ export const projectSchema = z
     terrainVisible: z.boolean().optional(),
     hillshadeVisible: z.boolean().optional(),
     contoursVisible: z.boolean().optional(),
-    contourInterval: z.union([z.literal(5), z.literal(10), z.literal(20)]).optional(),
+    contourInterval: z.union([z.literal(0.25), z.literal(5), z.literal(10), z.literal(20)]).optional(),
+    flowVisible: z.boolean().optional(),
+    depressionsVisible: z.boolean().optional(),
+    flowThresholdHa: z.union([z.literal(0.25), z.literal(1), z.literal(5)]).optional(),
     basemap: z.enum(["local", "streets", "ortho"]),
     view: z.object({
       center: position,

@@ -48,7 +48,53 @@ export function terrainCapability(directory) {
         ? {
             contours: {
               url: "/api/terrain/contours.geojson" + version,
-              intervals: [5, 10, 20],
+              intervals: existsSync(resolve(directory, "fine-contours.json"))
+                ? [0.25, 5, 10, 20]
+                : [5, 10, 20],
+              ...(existsSync(resolve(directory, "fine-contours.json"))
+                ? {
+                    fine: {
+                      ...JSON.parse(
+                        readFileSync(
+                          resolve(directory, "fine-contours.json"),
+                          "utf8",
+                        ),
+                      ),
+                      tiles: [
+                        "/api/terrain/fine-contours/{z}/{x}/{y}.png" +
+                          version,
+                      ],
+                    },
+                  }
+                : {}),
+            },
+          }
+        : {}),
+      ...(existsSync(resolve(directory, "hydrology.json"))
+        ? {
+            hydrology: {
+              ...JSON.parse(
+                readFileSync(resolve(directory, "hydrology.json"), "utf8"),
+              ),
+              depressions: {
+                ...JSON.parse(
+                  readFileSync(resolve(directory, "tiles.json"), "utf8"),
+                ),
+                tiles: [
+                  "/api/terrain/depressions/{z}/{x}/{y}.png" + version,
+                ],
+              },
+              accumulation: {
+                ...JSON.parse(
+                  readFileSync(resolve(directory, "tiles.json"), "utf8"),
+                ),
+                tiles: [
+                  "/api/terrain/accumulation/{z}/{x}/{y}.png" + version,
+                ],
+              },
+              network: {
+                url: "/api/terrain/flow-network.geojson" + version,
+              },
             },
           }
         : {}),
@@ -92,8 +138,29 @@ export function terrainRouter(directory) {
     res.set("Cache-Control", "private, max-age=3600");
     res.sendFile(file, { dotfiles: "allow" });
   });
+  for (const folder of ["fine-contours", "depressions", "accumulation"])
+    router.get(`/${folder}/:z/:x/:y.png`, (req, res) => {
+      const parts = [req.params.z, req.params.x, req.params.y];
+      if (!parts.every((p) => /^(0|[1-9]\d{0,6})$/.test(p)))
+        return res.status(400).end();
+      const [z, x, y] = parts.map(Number);
+      if (z > 20 || x >= 2 ** z || y >= 2 ** z)
+        return res.status(400).end();
+      const file =
+        directory &&
+        resolve(directory, folder, String(z), String(x), `${y}.png`);
+      if (!file || !existsSync(file)) return res.status(204).end();
+      res.set("Cache-Control", "private, max-age=3600");
+      res.sendFile(file, { dotfiles: "allow" });
+    });
   router.get("/contours.geojson", (_, res) => {
     const file = directory && resolve(directory, "contours.geojson");
+    if (!file || !existsSync(file)) return res.status(404).end();
+    res.set("Cache-Control", "private, max-age=3600");
+    res.type("application/geo+json").sendFile(file, { dotfiles: "allow" });
+  });
+  router.get("/flow-network.geojson", (_, res) => {
+    const file = directory && resolve(directory, "flow-network.geojson");
     if (!file || !existsSync(file)) return res.status(404).end();
     res.set("Cache-Control", "private, max-age=3600");
     res.type("application/geo+json").sendFile(file, { dotfiles: "allow" });

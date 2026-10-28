@@ -1,4 +1,30 @@
-# Descargas de Torrents 0.2.0
+# Descargas de Torrents 0.5.0
+
+## Instalación automática en Windows
+
+Después de descomprimir esta rama, haz doble clic en
+`INSTALAR-Y-ABRIR-TORRENTS.cmd`. El lanzador reconstruye y verifica la aplicación,
+instala la versión 0.5.0 con el MDT y abre Torrents. No hay que abrir CMD, escribir
+comandos ni ejecutar actualizaciones intermedias.
+
+Los lanzadores antiguos `PREPARAR-Y-ABRIR-TORRENTS.cmd` y
+`REPARAR-Y-ABRIR-TORRENTS.cmd` redirigen al mismo instalador automático.
+
+## Actualización 0.5.0: controles mediante barras
+
+Quien ya tenga la aplicación preparada puede descargar únicamente
+`updates/0.5.0/actualizacion-torrents-0.5.0.zip`, extraerla dentro de
+`C:\Torrents\GIS-downloads` y ejecutar `ACTUALIZAR-TORRENTS-0.5.cmd`.
+
+- La red cambia entre **Detallada**, **Media** y **Principal** mediante una barra.
+- Las curvas cambian entre **0,25, 5, 10 y 20 m** mediante otra barra.
+- El actualizador conserva los proyectos y vuelve a abrir Torrents.
+
+SHA-256 de la actualización:
+
+```text
+43f6ec3b9b3610dc5e323b88c7e31f73fd17481e8c7b4cb95ed68c326207e8dd
+```
 
 ## Actualización 0.4.0: hidrología D8 y curvas de 0,25 m
 

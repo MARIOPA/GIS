@@ -1,14 +1,35 @@
-# Descargas de Torrents 0.5.0
+# Descargas de Torrents 0.6.0
 
 ## Instalación automática en Windows
 
 Después de descomprimir esta rama, haz doble clic en
 `INSTALAR-Y-ABRIR-TORRENTS.cmd`. El lanzador reconstruye y verifica la aplicación,
-instala la versión 0.5.0 con el MDT y abre Torrents. No hay que abrir CMD, escribir
+instala la versión 0.6.0 con el MDT y abre Torrents. No hay que abrir CMD, escribir
 comandos ni ejecutar actualizaciones intermedias.
 
 Los lanzadores antiguos `PREPARAR-Y-ABRIR-TORRENTS.cmd` y
 `REPARAR-Y-ABRIR-TORRENTS.cmd` redirigen al mismo instalador automático.
+
+## Actualización 0.6.0: cuencas y mapa estático
+
+Quien ya tenga la aplicación preparada puede descargar únicamente
+`updates/0.6.0/actualizacion-torrents-0.6.0.zip`, extraerla dentro de
+`C:\Torrents\GIS-downloads` y ejecutar `ACTUALIZAR-TORRENTS-0.6.cmd`.
+
+- Un clic delimita en verde la cuenca aguas arriba.
+- Una línea azul con flechas sigue el agua hasta el último punto válido del MDT.
+- La capa de correcciones guarda posibles pasos, conexiones y zonas.
+- Flash Flood Map muestra agua retenida para lluvia uniforme e instantánea.
+
+El análisis es provisional: todavía no incorpora infiltración, drenaje, edificios
+ni correcciones verificadas y no equivale a Dynamic Flood. El actualizador es
+acumulativo, incluye la superficie v3 y conserva los proyectos.
+
+SHA-256 de la actualización:
+
+```text
+dc0f3a4a3937fd00ae40b3cfc3dc8b3931831dc6f38f0b66f147a28d39105eb4
+```
 
 ## Actualización 0.5.0: controles mediante barras
 

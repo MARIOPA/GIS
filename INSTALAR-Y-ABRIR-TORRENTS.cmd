@@ -5,11 +5,11 @@ for %%I in ("%~dp0.") do set "TORRENTS_ROOT=%%~fI"
 
 set "APP_NAME=torrents-portable-windows-x64-0.2.0"
 set "APP_ZIP=%TORRENTS_ROOT%\torrents-windows-listo-con-mdt-0.2.0.zip"
-set "UPDATE_ZIP=%TORRENTS_ROOT%\updates\0.5.0\actualizacion-torrents-0.5.0.zip"
-set "TORRENTS_UPDATE_DIR=%TORRENTS_ROOT%\actualizacion-torrents-0.5.0\update-0.5"
+set "UPDATE_ZIP=%TORRENTS_ROOT%\updates\0.6.0\actualizacion-torrents-0.6.0.zip"
+set "TORRENTS_UPDATE_DIR=%TORRENTS_ROOT%\actualizacion-torrents-0.6.0\update-0.6"
 
 echo.
-echo TORRENTS 0.5.0 - INSTALACION AUTOMATICA
+echo TORRENTS 0.6.0 - INSTALACION AUTOMATICA
 echo =======================================
 echo Preparando la aplicacion. No cierres esta ventana...
 
@@ -25,14 +25,14 @@ if not exist "%TORRENTS_ROOT%\%APP_NAME%\Abrir-Torrents.cmd" goto error_extraer
 
 :actualizar
 if not exist "%UPDATE_ZIP%" goto error_actualizacion
-echo Instalando la version 0.5.0 y el MDT...
+echo Instalando la version 0.6.0 y el MDT...
 tar.exe -xf "%UPDATE_ZIP%" -C "%TORRENTS_ROOT%"
 if errorlevel 1 goto error_actualizacion
 powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; Get-ChildItem -LiteralPath $env:TORRENTS_UPDATE_DIR -Recurse -File | Unblock-File; & (Join-Path $env:TORRENTS_UPDATE_DIR 'actualizar.ps1')"
 if errorlevel 1 goto error_actualizacion
 
 echo.
-echo Torrents 0.5.0 se ha preparado correctamente y se abrira ahora.
+echo Torrents 0.6.0 se ha preparado correctamente y se abrira ahora.
 pause
 exit /b 0
 
@@ -51,7 +51,7 @@ exit /b 1
 
 :error_actualizacion
 echo.
-echo No se ha podido instalar la actualizacion 0.5.0.
-echo Comprueba que existe la carpeta updates\0.5.0 y conserva el mensaje mostrado arriba.
+echo No se ha podido instalar la actualizacion 0.6.0.
+echo Comprueba que existe la carpeta updates\0.6.0 y conserva el mensaje mostrado arriba.
 pause
 exit /b 1

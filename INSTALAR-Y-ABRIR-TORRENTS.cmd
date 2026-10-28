@@ -6,7 +6,7 @@ for %%I in ("%~dp0.") do set "TORRENTS_ROOT=%%~fI"
 set "APP_NAME=torrents-portable-windows-x64-0.2.0"
 set "APP_ZIP=%TORRENTS_ROOT%\torrents-windows-listo-con-mdt-0.2.0.zip"
 set "UPDATE_ZIP=%TORRENTS_ROOT%\updates\0.6.0\actualizacion-torrents-0.6.0.zip"
-set "TORRENTS_UPDATE_DIR=%TORRENTS_ROOT%\actualizacion-torrents-0.6.0\update-0.6"
+set "TORRENTS_UPDATE_DIR=%TORRENTS_ROOT%\update-0.6"
 
 echo.
 echo TORRENTS 0.6.0 - INSTALACION AUTOMATICA

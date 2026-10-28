@@ -23,6 +23,10 @@ root=Path(sys.argv[1]);root.mkdir(exist_ok=True)
 a=np.arange(400,dtype='float32').reshape(20,20)+100
 a[0,0]=-9999
 with rasterio.open(root/'dtm.tif','w',driver='GTiff',width=20,height=20,count=1,dtype='float32',crs='EPSG:25831',transform=from_origin(462000,4382000,1,1),nodata=-9999) as dst:dst.write(a,1)
+conditioned=a.copy();conditioned[10,10]+=1
+with rasterio.open(root/'conditioned-dtm.tif','w',driver='GTiff',width=20,height=20,count=1,dtype='float32',crs='EPSG:25831',transform=from_origin(462000,4382000,1,1),nodata=-9999) as dst:dst.write(conditioned,1)
+direction=np.full((20,20),3,dtype='uint8');direction[:,-1]=0;direction[0,0]=255
+with rasterio.open(root/'flow-direction.tif','w',driver='GTiff',width=20,height=20,count=1,dtype='uint8',crs='EPSG:25831',transform=from_origin(462000,4382000,1,1),nodata=255) as dst:dst.write(direction,1)
 (root/'preview.json').write_text(json.dumps({'status':'candidate_not_validated','center':[2.5,39.5],'coordinates':[],'resolution_m':1}))
 transform=Transformer.from_crs(25831,4326,always_xy=True)
 print(json.dumps({'point':transform.transform(462010.5,4381989.5),'line':[transform.transform(462005.5,4381989.5),transform.transform(462015.5,4381989.5)]}))
@@ -143,6 +147,7 @@ print(json.dumps({'point':transform.transform(462010.5,4381989.5),'line':[transf
   ]);
   assert.deepEqual(capabilities.terrain.contours.intervals, [0.25, 5, 10, 20]);
   assert.equal(capabilities.terrain.hydrology.algorithm, "TEST D8");
+  assert.equal(capabilities.flashFlood.status, "provisional_available");
   const tile = await fetch(base + "/api/terrain/tiles/2/1/1.png");
   assert.equal(tile.status, 200);
   assert.equal(tile.headers.get("content-type"), "image/png");
@@ -195,6 +200,19 @@ print(json.dumps({'point':transform.transform(462010.5,4381989.5),'line':[transf
   assert.equal(profile.samples[0].elevation, 305);
   assert.equal(profile.samples.at(-1).elevation, 315);
   assert.equal(profile.vertical_validated, false);
+  const watershed = await (
+    await query("watershed", {
+      lng: positions.point[0],
+      lat: positions.point[1],
+    })
+  ).json();
+  assert.ok(watershed.area_m2 > 1);
+  assert.ok(watershed.downstream.geometry.coordinates.length > 1);
+  const flood = await (
+    await query("flash-flood", { rainfall_mm: 50, minimum_depth_m: 0.05 })
+  ).json();
+  assert.match(flood.image, /^data:image\/png;base64,/);
+  assert.equal(flood.rainfall_mm, 50);
   assert.equal(
     (await query("profile", { geometry: { type: "Polygon", coordinates: [] } }))
       .status,

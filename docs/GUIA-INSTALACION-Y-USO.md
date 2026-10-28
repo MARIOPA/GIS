@@ -179,7 +179,7 @@ Las capas se pueden mostrar u ocultar y permiten ajustar color y opacidad. **Can
 
 Las consultas y perfiles se calculan a partir del MDT real preparado en el servidor. Fuera de la tesela o en zonas sin datos no se inventan valores.
 
-**El MDT es provisional:** falta confirmar datum vertical y precisión. La herramienta no debe interpretarse como un modelo de inundación validado. Cuencas, recorrido/acumulación de flujo y Flash Flood Map siguen pendientes. Cambiar la precipitación guarda un parámetro; todavía no calcula una inundación. El modelo con edificios requiere huellas verificadas.
+**El MDT es provisional:** falta confirmar datum vertical y precisión. La herramienta no debe interpretarse como un modelo de inundación validado. La versión 0.6.0 calcula cuencas, recorrido D8 y una pantalla estacionaria con lluvia uniforme e instantánea. No incluye infiltración, drenaje, tiempos, velocidades ni correcciones validadas. El modelo con edificios requiere huellas verificadas.
 
 ### Exportar
 

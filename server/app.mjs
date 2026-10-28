@@ -49,7 +49,7 @@ export function createApp({
   });
   app.use(express.json({ limit: "25mb" }));
   app.get("/api/health", (_, res) =>
-    res.json({ status: "ok", app: "torrents", version: "0.5.0" }),
+    res.json({ status: "ok", app: "torrents", version: "0.6.0" }),
   );
   const configured = () =>
     Number(db.prepare("SELECT count(*) AS n FROM users").get().n) > 0;
@@ -152,22 +152,25 @@ export function createApp({
   app.use("/api/maps", mapsRouter);
   app.use("/api/terrain", terrainRouter(terrainDir));
   app.get("/api/capabilities", (_, res) =>
-    res.json({
-      terrain: terrainCapability(terrainDir),
+    res.json((() => {
+      const terrain = terrainCapability(terrainDir);
+      return {
+      terrain,
       flashFlood: {
-        status: "pending",
+        status: terrain.hydrology ? "provisional_available" : "pending",
         message:
-          "Motor de llenado y desbordamiento pendiente de implementación y validación.",
+          terrain.hydrology
+            ? "Cribado estático provisional con lluvia uniforme e instantánea."
+            : "Requiere una superficie con hidrología preparada.",
       },
       dynamicFlood: { status: "excluded" },
-    }),
+    };
+    })()),
   );
   for (const path of [
     "elevation",
     "profile",
-    "watershed",
     "downstream",
-    "flash-flood",
   ])
     app.post("/api/analysis/" + path, (_, res) =>
       res.status(409).json({

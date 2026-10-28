@@ -2,7 +2,7 @@
 
 Aplicación SIG de gabinete para conservar y documentar torrentes en Baleares. React, TypeScript y MapLibre, con API Node/Express, proyectos en SQLite y sesiones privadas. Creada desde cero en `MARIOPA/GIS`; el prototipo del entorno anterior no estaba disponible y no se ha modificado `design-patterns`.
 
-Para instalar la versión 0.5.0 en Windows/Linux, usarla portable o cargar superficies, consulta la [guía de instaladores y superficies](docs/INSTALADORES-Y-SUPERFICIES.md). La versión 0.5.0 simplifica la instalación y permite cambiar por barras el nivel de la red, las curvas, la precipitación y la opacidad.
+Para instalar la versión 0.6.0 en Windows/Linux, usarla portable o cargar superficies, consulta la [guía de instaladores y superficies](docs/INSTALADORES-Y-SUPERFICIES.md). La versión 0.6.0 añade cuencas, trazado aguas abajo, correcciones documentales y un mapa de inundación estático provisional.
 
 ## Arranque
 
@@ -36,14 +36,14 @@ El servidor de desarrollo usa el puerto **5173**, ligado a `127.0.0.1`. Se utili
 | MDT piloto                                              | COG real de clase 2 a 1,5 m; **provisional, precisión y datum vertical sin validar**                     |
 | Elevación y perfiles                                    | Muestras reales del MDT en el servidor, con NoData y límites de cobertura explícitos                     |
 | Hidrología topográfica                                  | Acondicionamiento Priority-Flood, dirección D8, acumulación, depresiones y red de flujo provisionales     |
-| Cuencas y Flash Flood Map                               | **Pendientes**; la lluvia es un parámetro guardado y no genera inundaciones                               |
+| Cuencas y Flash Flood Map                               | Implementados sobre el piloto como análisis estacionario **provisional y sin validar**                    |
 | Modelo con edificios                                    | Herramienta preparada y probada con datos sintéticos; faltan huellas verificadas del piloto              |
 | Capas hidrológicas IDEIB y Portal de l’Aigua            | Catálogo enlazado; integración pendiente de verificar cada servicio                                      |
 | Curvas de nivel                                         | Teselas de 0,25 m para vista cercana y vectores filtrables de 5, 10 y 20 m                               |
 | Infiltración y permeabilidad                            | Pendientes de datos y validación                                                                         |
 | DynamicFlood                                            | Excluido del alcance                                                                                     |
 
-No se generan inundaciones ni cuencas. La red D8 representa drenaje topográfico estático sobre el MDT acondicionado: no incorpora lluvia, alcantarillas, puentes, edificios, rugosidad o infiltración. La vista del piloto muestra Z nativa del archivo, no una cota ortométrica certificada. Los fallos de cartografía en línea activan la base local sin borrar el proyecto.
+Las cuencas y el recorrido aguas abajo usan la red D8. El Flash Flood Map distribuye lluvia uniforme e instantánea, llena depresiones y vierte el exceso. No incorpora duración, alcantarillas, puentes, edificios, rugosidad, infiltración ni correcciones dibujadas. La vista del piloto muestra Z nativa del archivo, no una cota ortométrica certificada. Los fallos de cartografía en línea activan la base local sin borrar el proyecto.
 
 Para consultar el terreno: abre **Elevation → Ver piloto LiDAR**. Point Query consulta Z nativa. Dibuja una línea con **Profile**, termina con Enter, y usa **Consultar perfil real** en el elemento seleccionado. Los huecos son ausencia de datos y no se rellenan en el perfil.
 
@@ -73,12 +73,12 @@ Producción se niega a arrancar sin usuarios. Se necesita un proxy HTTPS delante
 
 Variables opcionales: `PORT`, `HOST`, `DATA_DIR` (SQLite), `TERRAIN_DIR` (COG y manifiestos; por defecto `.data/terrain`), `TRUST_PROXY`. Conserva las variables de proxy y certificados que inyecta la plataforma. Copias de seguridad: usuarios, proyectos, sesiones y datos están en `.data/`; usa la API de backup de SQLite o para el servidor antes de copiar la base y sus ficheros WAL/SHM. Protege también el volumen de datos y sus backups.
 
-Consulta [arquitectura y alojamiento](docs/ARQUITECTURA.md), [informe del piloto](docs/pnoa/PILOTO.md) y [alcance respecto a SCALGO](docs/SCALGO-ALCANCE.md).
+Consulta [arquitectura y alojamiento](docs/ARQUITECTURA.md), [informe del piloto](docs/pnoa/PILOTO.md), [alcance respecto a SCALGO](docs/SCALGO-ALCANCE.md) y la [propuesta de cobertura, CN y correcciones](docs/COBERTURA-INFILTRACION-Y-CORRECCIONES.md).
 
-# Instaladores y superficies 0.5.0
+# Instaladores y superficies 0.6.0
 
 Consulta [instalación Windows/Linux y uso portable](docs/INSTALADORES-Y-SUPERFICIES.md)
 y el [procedimiento real de LiDAR a MDT optimizado](docs/NOTA-LIDAR-A-MDT.md).
 La superficie se distribuye por separado y se importa desde ZIP o carpeta local
 sincronizada con SharePoint. El MDT tiene niveles COG y la visualización utiliza
-teselas XYZ. La versión 0.5.0 incorpora el resultado hidrológico estático del piloto.
+teselas XYZ. La versión 0.6.0 incorpora cuencas y el mapa estático provisional del piloto.

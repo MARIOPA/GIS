@@ -1,5 +1,5 @@
 import type { FeatureCollection } from "geojson";
-import type { Project, MapFeature } from "../types";
+import type { Project, MapFeature, Layer } from "../types";
 import area from "@turf/area";
 import length from "@turf/length";
 // Shared runtime validation is also used by the API.
@@ -23,6 +23,19 @@ export function parseProject(raw: unknown): Project {
   const p = projectSchema.safeParse(raw);
   if (!p.success)
     throw new Error("Proyecto incompatible: " + p.error.issues[0].message);
+  if (
+    !p.data.layers.some(
+      (layer: Layer) => layer.id === "hydrological-corrections",
+    )
+  )
+    p.data.layers.push({
+      id: "hydrological-corrections",
+      name: "Correcciones hidrológicas",
+      visible: true,
+      opacity: 1,
+      color: "#247da0",
+      source: "drawing",
+    });
   return p.data;
 }
 export function metric(feature: MapFeature): string {

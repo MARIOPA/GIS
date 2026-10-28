@@ -152,8 +152,7 @@ test("Private API requires login, rejects bad origins and isolates each user", a
     { lng: 2.7, lat: 39.7 },
     cookie,
   );
-  assert.equal(analysis.status, 409);
-  assert.equal((await analysis.json()).status, "not_available");
+  assert.equal(analysis.status, 404);
   assert.equal((await request("/api/logout", "POST", {}, cookie)).status, 200);
   assert.equal(
     (await request("/api/projects", "GET", null, cookie)).status,

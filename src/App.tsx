@@ -85,7 +85,9 @@ import {
   type Project,
   type QueryResult,
   type SavedProject,
+  type StaticFloodResult,
   type Tool,
+  type WatershedResult,
 } from "./types";
 type Session = {
   authenticated: boolean;
@@ -200,7 +202,7 @@ const topTools: { id: Tool; icon: LucideIcon; label: string }[] = [
   { id: "navigate", icon: Search, label: "Zoom" },
   { id: "query", icon: LocateFixed, label: "Point Query" },
   { id: "profile", icon: Activity, label: "Profile" },
-  { id: "watershed", icon: Waves, label: "Watershed" },
+  { id: "watershed", icon: Waves, label: "Cuenca" },
 ];
 const bottomTools: { id: Tool; icon: LucideIcon; label: string }[] = [
   { id: "select", icon: MousePointer2, label: "Seleccionar" },
@@ -433,6 +435,11 @@ export default function App() {
   const [tool, setTool] = useState<Tool>("navigate");
   const [selected, setSelected] = useState<string | null>(null);
   const [query, setQuery] = useState<QueryResult | null>(null);
+  const [watershed, setWatershed] = useState<WatershedResult | null>(null);
+  const [watershedBusy, setWatershedBusy] = useState(false);
+  const [staticFlood, setStaticFlood] = useState<StaticFloodResult | null>(null);
+  const [floodBusy, setFloodBusy] = useState(false);
+  const [drawingLayerId, setDrawingLayerId] = useState("canvas");
   const [left, setLeft] = useState(() => window.innerWidth > 650);
   const [right, setRight] = useState(() => window.innerWidth > 960);
   const [tab, setTab] = useState<"layers" | "canvas">("layers");
@@ -474,6 +481,7 @@ export default function App() {
   const [importError, setImportError] = useState("");
   const revision = useRef(0);
   const querySequence = useRef(0);
+  const floodSequence = useRef(0);
   const current = useRef(project);
   current.current = project;
   const notify = useCallback((text: string) => setNotice(text), []);
@@ -490,6 +498,42 @@ export default function App() {
       })
       .catch(() => {});
   }, [session?.authenticated]);
+  useEffect(() => {
+    if (
+      !session?.authenticated ||
+      analysis !== "flood" ||
+      !terrain?.hydrology
+    )
+      return;
+    const sequence = ++floodSequence.current;
+    setFloodBusy(true);
+    const timer = window.setTimeout(() => {
+      api<StaticFloodResult>("/api/terrain/flash-flood", {
+        method: "POST",
+        body: JSON.stringify({
+          rainfall_mm: project.rainfall,
+          minimum_depth_m: project.floodDepthM || 0.1,
+        }),
+      })
+        .then((result) => {
+          if (sequence === floodSequence.current) setStaticFlood(result);
+        })
+        .catch((error) => {
+          if (sequence === floodSequence.current) notify(error.message);
+        })
+        .finally(() => {
+          if (sequence === floodSequence.current) setFloodBusy(false);
+        });
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [
+    session?.authenticated,
+    analysis,
+    terrain?.hydrology,
+    project.rainfall,
+    project.floodDepthM,
+    notify,
+  ]);
   useEffect(() => {
     setProfileResult(null);
   }, [selected]);
@@ -653,6 +697,25 @@ export default function App() {
           : "Línea de referencia creada. El perfil de elevación requiere un MDT.",
       );
     if (!["line", "polygon", "area"].includes(tool)) setTool("select");
+  }
+  function startCorrection(nextTool: "point" | "line" | "polygon") {
+    setDrawingLayerId("hydrological-corrections");
+    setTool(nextTool);
+    update((p) => ({
+      ...p,
+      layers: p.layers.map((layer) =>
+        layer.id === "hydrological-corrections"
+          ? { ...layer, visible: true }
+          : layer,
+      ),
+    }));
+    notify(
+      nextTool === "point"
+        ? "Marca una posible obra de paso."
+        : nextTool === "line"
+          ? "Dibuja una conexión entre los dos lados de la barrera."
+          : "Dibuja la zona que debe revisarse o conectarse.",
+    );
   }
   function editFeature(f: MapFeature) {
     setProfileResult(null);
@@ -1011,7 +1074,7 @@ export default function App() {
                             setAnalysis(item.id);
                             setTool("navigate");
                             setRight(true);
-                            if (terrain?.hydrology && item.id !== "flood")
+                            if (terrain?.hydrology)
                               update((p) => ({
                                 ...p,
                                 flowVisible:
@@ -1028,15 +1091,13 @@ export default function App() {
                           <item.icon size={15} />
                           <span>{item.name}</span>
                           <span className="status-chip">
-                            {terrain?.hydrology && item.id !== "flood"
-                              ? "Disponible"
-                              : "Sin datos"}
+                            {terrain?.hydrology ? "Disponible" : "Sin datos"}
                           </span>
                         </button>
                       ))}
                       <p className="category-note">
                         {terrain?.hydrology
-                          ? "D8 topográfico provisional. La lluvia y la inundación siguen pendientes."
+                          ? "D8 y cribado de lluvia estacionaria provisionales; infiltración y validación pendientes."
                           : "Análisis pendientes de MDT validado."}
                       </p>
                     </>,
@@ -1167,11 +1228,54 @@ export default function App() {
                   {category(
                     "Hydrological Corrections",
                     SlidersHorizontal,
-                    <p className="category-note">
-                      Sin correcciones importadas. Importa geometrías para
-                      documentar pasos, barreras o actuaciones. No modifican aún
-                      un modelo hidrológico.
-                    </p>,
+                    <>
+                      <button
+                        className="terrain-layer-row"
+                        onClick={() =>
+                          update((p) => ({
+                            ...p,
+                            layers: p.layers.map((layer) =>
+                              layer.id === "hydrological-corrections"
+                                ? { ...layer, visible: !layer.visible }
+                                : layer,
+                            ),
+                          }))
+                        }
+                      >
+                        {project.layers.find(
+                          (layer) => layer.id === "hydrological-corrections",
+                        )?.visible ? (
+                          <Eye size={14} />
+                        ) : (
+                          <EyeOff size={14} />
+                        )}
+                        <span>Correcciones hidrológicas</span>
+                        <span className="status-chip">
+                          {
+                            project.features.features.filter(
+                              (feature) =>
+                                feature.properties?.layerId ===
+                                "hydrological-corrections",
+                            ).length
+                          }
+                        </span>
+                      </button>
+                      <div className="correction-actions">
+                        <button onClick={() => startCorrection("point")}>
+                          <MapPin size={13} /> Paso
+                        </button>
+                        <button onClick={() => startCorrection("line")}>
+                          <Spline size={13} /> Conexión
+                        </button>
+                        <button onClick={() => startCorrection("polygon")}>
+                          <SquareDashed size={13} /> Zona
+                        </button>
+                      </div>
+                      <p className="category-note">
+                        Candidatos para revisar con BTN, cauces y ortofoto. Se
+                        documentan en el proyecto; todavía no alteran el D8.
+                      </p>
+                    </>,
                   )}
                   {category(
                     "Land Cover",
@@ -1452,6 +1556,9 @@ export default function App() {
             ref={map}
             project={project}
             tool={tool}
+            drawingLayerId={drawingLayerId}
+            watershed={tool === "watershed" ? watershed : null}
+            staticFlood={analysis === "flood" ? staticFlood : null}
             selected={selected}
             onCreate={createFeature}
             onUpdate={editFeature}
@@ -1465,6 +1572,27 @@ export default function App() {
               setQuery(q);
               setElevation(null);
               setRight(true);
+              if (tool === "watershed") {
+                setWatershed(null);
+                if (!terrain?.hydrology) {
+                  notify("La delimitación requiere una superficie D8 preparada.");
+                } else {
+                  setWatershedBusy(true);
+                  api<WatershedResult>("/api/terrain/watershed", {
+                    method: "POST",
+                    body: JSON.stringify({ lng: q.lng, lat: q.lat }),
+                  })
+                    .then((result) => {
+                      if (sequence === querySequence.current)
+                        setWatershed(result);
+                    })
+                    .catch((error) => notify(error.message))
+                    .finally(() => {
+                      if (sequence === querySequence.current)
+                        setWatershedBusy(false);
+                    });
+                }
+              }
               if (terrain)
                 api<{ elevation: number | null; status: string }>(
                   "/api/terrain/elevation",
@@ -1529,7 +1657,10 @@ export default function App() {
                   aria-label={t.label}
                   title={t.label}
                   aria-pressed={tool === t.id}
-                  onClick={() => setTool(t.id)}
+                  onClick={() => {
+                    setDrawingLayerId("canvas");
+                    setTool(t.id);
+                  }}
                 >
                   <t.icon size={19} />
                 </button>
@@ -1578,7 +1709,7 @@ export default function App() {
                   : tool === "profile"
                     ? "Profile"
                     : tool === "watershed"
-                      ? "Watershed"
+                      ? "Cuenca"
                       : tool === "query"
                         ? "Point Query"
                         : "Análisis del terreno"}
@@ -1767,7 +1898,7 @@ export default function App() {
                         : tool === "profile"
                           ? "Profile"
                           : tool === "watershed"
-                            ? "Watershed"
+                            ? "Cuenca aguas arriba"
                             : analysis === "flood"
                               ? "Flash Flood Map"
                               : analysis === "flow"
@@ -1793,8 +1924,14 @@ export default function App() {
                         ? terrain
                           ? "Coordenadas · Z nativa provisional"
                           : "Coordenadas disponibles"
-                        : terrain?.hydrology && analysis !== "flood"
-                          ? "D8 provisional · resultado disponible"
+                        : tool === "watershed"
+                          ? terrain?.hydrology
+                            ? "D8 provisional · pulsa un punto del MDT"
+                            : "Sin dirección D8 preparada"
+                        : terrain?.hydrology
+                          ? analysis === "flood"
+                            ? "Cribado estático provisional · resultado disponible"
+                            : "D8 provisional · resultado disponible"
                           : terrain
                             ? "MDT provisional · análisis pendiente"
                             : "Sin modelo de terreno"}
@@ -1837,6 +1974,76 @@ export default function App() {
                             <Copy size={12} />
                             Copiar coordenadas
                           </button>
+                          {tool === "watershed" && watershedBusy && (
+                            <div className="watershed-loading" role="status">
+                              Delimitando cuenca y recorrido…
+                            </div>
+                          )}
+                          {tool === "watershed" && watershed && (
+                            <div className="watershed-result">
+                              <div className="watershed-key">
+                                <span className="basin-key" />
+                                <span>Cuenca aguas arriba</span>
+                                <span className="flow-key" />
+                                <span>Recorrido aguas abajo</span>
+                              </div>
+                              <dl className="properties hydrology-stats">
+                                <dt>Superficie</dt>
+                                <dd>
+                                  {(watershed.area_m2 / 10000).toLocaleString(
+                                    "es-ES",
+                                    { maximumFractionDigits: 3 },
+                                  )}{" "}
+                                  ha
+                                </dd>
+                                <dt>Recorrido hasta el borde</dt>
+                                <dd>
+                                  {watershed.downstream_length_m.toLocaleString(
+                                    "es-ES",
+                                    { maximumFractionDigits: 0 },
+                                  )}{" "}
+                                  m
+                                </dd>
+                                <dt>Último punto del MDT</dt>
+                                <dd>
+                                  {watershed.endpoint[1].toFixed(6)}, {" "}
+                                  {watershed.endpoint[0].toFixed(6)}
+                                </dd>
+                              </dl>
+                              <div className="watershed-actions">
+                                <button
+                                  className="secondary"
+                                  onClick={() =>
+                                    map.current?.fitFeatures(watershed.basin)
+                                  }
+                                >
+                                  <Maximize size={13} /> Ver cuenca completa
+                                </button>
+                                <button
+                                  className="text-button"
+                                  onClick={() =>
+                                    download("cuenca-y-recorrido.geojson", {
+                                      type: "FeatureCollection",
+                                      features: [
+                                        ...watershed.basin.features,
+                                        watershed.downstream,
+                                        {
+                                          type: "Feature",
+                                          properties: { name: "Último punto MDT" },
+                                          geometry: {
+                                            type: "Point",
+                                            coordinates: watershed.endpoint,
+                                          },
+                                        },
+                                      ],
+                                    })
+                                  }
+                                >
+                                  <Download size={12} /> Exportar
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </>
                       ) : (
                         <div className="query-empty">
@@ -2034,11 +2241,32 @@ export default function App() {
                           <span>250</span>
                           <span>500 mm</span>
                         </div>
+                        <SteppedRange
+                          id="flood-minimum-depth"
+                          label="Profundidad visible"
+                          ariaLabel="Profundidad mínima visible de inundación"
+                          options={[
+                            { value: 0.05, label: "5 cm" },
+                            { value: 0.1, label: "10 cm" },
+                            { value: 0.25, label: "25 cm" },
+                            { value: 0.5, label: "50 cm" },
+                          ]}
+                          value={project.floodDepthM || 0.1}
+                          onChange={(value) =>
+                            update((p) => ({
+                              ...p,
+                              floodDepthM: value as 0.05 | 0.1 | 0.25 | 0.5,
+                            }))
+                          }
+                        />
                         <div className="parameter-callout">
                           <Info size={14} />
                           <p>
-                            Parámetro guardado. No genera resultados hasta
-                            integrar y validar el modelo.
+                            {floodBusy
+                              ? "Recalculando el episodio estático…"
+                              : staticFlood
+                                ? staticFlood.limitations
+                                : "Preparando el primer resultado estático…"}
                           </p>
                         </div>
                       </div>
@@ -2046,18 +2274,34 @@ export default function App() {
                         <h3>Capas del análisis</h3>
                         <div className="analysis-legend">
                           <span className="legend-swatch" />
-                          <span>Acumulación de agua</span>
-                          <small>Pendiente</small>
-                        </div>
-                        <div className="analysis-legend">
-                          <span className="legend-line" />
-                          <span>Recorrido del flujo</span>
-                          <small>Pendiente</small>
+                          <span>Agua retenida en depresiones</span>
+                          <small>{floodBusy ? "Calculando" : "Visible"}</small>
                         </div>
                         <div className="depth-legend">
                           <div />
-                          <span>Profundidad · sin resultados</span>
+                          <span>Profundidad · azul claro a azul oscuro</span>
                         </div>
+                        {staticFlood && (
+                          <dl className="properties hydrology-stats flood-stats">
+                            <dt>Superficie visible</dt>
+                            <dd>
+                              {(staticFlood.flooded_area_m2 / 10000).toLocaleString(
+                                "es-ES",
+                                { maximumFractionDigits: 3 },
+                              )}{" "}
+                              ha
+                            </dd>
+                            <dt>Profundidad máxima</dt>
+                            <dd>{staticFlood.maximum_depth_m.toFixed(2)} m</dd>
+                            <dt>Volumen retenido</dt>
+                            <dd>
+                              {staticFlood.stored_volume_m3.toLocaleString("es-ES", {
+                                maximumFractionDigits: 0,
+                              })}{" "}
+                              m³
+                            </dd>
+                          </dl>
+                        )}
                       </div>
                     </>
                   )}
@@ -2077,7 +2321,7 @@ export default function App() {
                       {terrain
                         ? "MDT piloto preparado a " +
                           terrain.resolution_m +
-                          " m. Z nativa y precisión pendientes de validar. Las cuencas y las inundaciones siguen pendientes de cálculo."
+                          " m. Z nativa y precisión pendientes de validar. Cuencas D8 y cribado estático disponibles."
                         : "Falta procesar y validar el LiDAR piloto PNOA. No hay inundaciones, cuencas ni elevaciones calculadas."}
                     </p>
                     {terrain && (
@@ -2775,8 +3019,8 @@ export default function App() {
               <p>
                 Si el piloto está preparado, Point Query y los perfiles
                 muestrean el MDT real y muestran su carácter provisional.
-                Cuencas y Flash Flood Map siguen pendientes de validación e
-                implementación. La lluvia es un parámetro guardado.
+                Cuencas y Flash Flood Map están disponibles como cribado
+                provisional y siguen pendientes de validación científica.
               </p>
             </section>
           </div>

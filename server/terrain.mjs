@@ -174,7 +174,7 @@ export function terrainRouter(directory) {
     if (terrainCapability(directory).status === "missing")
       return res.status(409).json({ error: "No hay un MDT preparado." });
     const input = { kind };
-    if (kind === "point") {
+    if (kind === "point" || kind === "watershed") {
       if (
         !Number.isFinite(req.body?.lng) ||
         !Number.isFinite(req.body?.lat) ||
@@ -184,7 +184,7 @@ export function terrainRouter(directory) {
         return res.status(400).json({ error: "Coordenadas WGS84 inválidas." });
       input.lng = req.body.lng;
       input.lat = req.body.lat;
-    } else {
+    } else if (kind === "profile") {
       const parsed = collectionSchema.safeParse({
         type: "FeatureCollection",
         features: [
@@ -200,25 +200,51 @@ export function terrainRouter(directory) {
           .status(400)
           .json({ error: "Usa una línea WGS84 de hasta 1.000 vértices." });
       input.coordinates = parsed.data.features[0].geometry.coordinates;
+    } else {
+      if (
+        !Number.isFinite(req.body?.rainfall_mm) ||
+        req.body.rainfall_mm < 0 ||
+        req.body.rainfall_mm > 500 ||
+        !Number.isFinite(req.body?.minimum_depth_m) ||
+        req.body.minimum_depth_m < 0 ||
+        req.body.minimum_depth_m > 2
+      )
+        return res.status(400).json({
+          error: "Usa una lluvia de 0 a 500 mm y una profundidad de 0 a 2 m.",
+        });
+      input.rainfall_mm = req.body.rainfall_mm;
+      input.minimum_depth_m = req.body.minimum_depth_m;
     }
     if (running >= 2)
       return res.status(429).json({
         error: "Hay otras consultas de terreno en curso. Vuelve a intentarlo.",
       });
     running++;
+    const hydrologyQuery = kind === "watershed" || kind === "flood";
     const child = spawn(
       pythonExecutable(),
-      [resolve(appRoot, "scripts/query_terrain.py"), resolve(directory)],
+      [
+        resolve(
+          appRoot,
+          hydrologyQuery
+            ? "scripts/query_hydrology.py"
+            : "scripts/query_terrain.py",
+        ),
+        resolve(directory),
+      ],
       { stdio: ["pipe", "pipe", "pipe"] },
     );
-    const timer = setTimeout(() => child.kill("SIGTERM"), 15000);
+    const timer = setTimeout(
+      () => child.kill("SIGTERM"),
+      kind === "flood" ? 30000 : 15000,
+    );
     let output = "";
     let failed = false;
     child.stdin.on("error", () => {});
     child.stdin.end(JSON.stringify(input));
     child.stdout.on("data", (b) => {
       output += b.toString();
-      if (output.length > 200000) {
+      if (output.length > (kind === "flood" ? 8000000 : 2000000)) {
         failed = true;
         child.kill("SIGTERM");
       }
@@ -234,7 +260,11 @@ export function terrainRouter(directory) {
       if (code !== 0 || failed)
         return res.status(422).json({
           error:
-            "No se ha podido muestrear el terreno. Revisa la cobertura, la longitud de la línea y el entorno Python.",
+            kind === "watershed"
+              ? "No se ha podido delimitar la cuenca. Elige un punto dentro del MDT preparado."
+              : kind === "flood"
+                ? "No se ha podido calcular el mapa estático para este episodio."
+                : "No se ha podido muestrear el terreno. Revisa la cobertura, la longitud de la línea y el entorno Python.",
         });
       try {
         res.json(JSON.parse(output));
@@ -247,5 +277,7 @@ export function terrainRouter(directory) {
   }
   router.post("/elevation", (req, res) => query(req, res, "point"));
   router.post("/profile", (req, res) => query(req, res, "profile"));
+  router.post("/watershed", (req, res) => query(req, res, "watershed"));
+  router.post("/flash-flood", (req, res) => query(req, res, "flood"));
   return router;
 }

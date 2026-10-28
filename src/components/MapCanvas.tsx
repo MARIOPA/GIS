@@ -10,12 +10,21 @@ import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 maplibregl.setWorkerUrl(workerUrl);
 import {
   type GeoJSONSource,
+  type ImageSource,
   type Map as GLMap,
   type StyleSpecification,
 } from "maplibre-gl";
 import type { Feature, FeatureCollection, Position } from "geojson";
 import bbox from "@turf/bbox";
-import type { Layer, MapFeature, Project, QueryResult, Tool } from "../types";
+import type {
+  Layer,
+  MapFeature,
+  Project,
+  QueryResult,
+  StaticFloodResult,
+  Tool,
+  WatershedResult,
+} from "../types";
 export type MapHandle = {
   setView: (view: Project["view"]) => void;
   flyTo: (center: number[], zoom?: number) => void;
@@ -72,6 +81,9 @@ type Props = {
   } | null;
   project: Project;
   tool: Tool;
+  drawingLayerId: string;
+  watershed: WatershedResult | null;
+  staticFlood: StaticFloodResult | null;
   selected: string | null;
   onCreate: (f: MapFeature) => void;
   onUpdate: (f: MapFeature) => void;
@@ -261,8 +273,15 @@ export default forwardRef<MapHandle, Props>(function MapCanvas(props, ref) {
         ? { type: "Polygon", coordinates: [[...pts, pts[0]]] }
         : { type: "LineString", coordinates: pts },
       properties: {
-        name: polygon ? "Área de trabajo" : "Tramo de torrente",
-        layerId: "canvas",
+        name:
+          live.current.drawingLayerId === "hydrological-corrections"
+            ? polygon
+              ? "Zona de corrección"
+              : "Conexión hidrológica"
+            : polygon
+              ? "Área de trabajo"
+              : "Tramo de torrente",
+        layerId: live.current.drawingLayerId,
         kind: tool,
       },
     });
@@ -352,6 +371,8 @@ export default forwardRef<MapHandle, Props>(function MapCanvas(props, ref) {
           "pilot-depressions",
           "pilot-accumulation",
           "pilot-flow-network",
+          "watershed-result",
+          "static-flood-result",
           "sketches",
           "draft",
           "coast",
@@ -385,8 +406,13 @@ export default forwardRef<MapHandle, Props>(function MapCanvas(props, ref) {
           id: crypto.randomUUID(),
           geometry: { type: "Point", coordinates },
           properties: {
-            name: p.tool === "text" ? "Nueva anotación" : "Punto de interés",
-            layerId: "canvas",
+            name:
+              p.drawingLayerId === "hydrological-corrections"
+                ? "Posible obra de paso"
+                : p.tool === "text"
+                  ? "Nueva anotación"
+                  : "Punto de interés",
+            layerId: p.drawingLayerId,
             kind: p.tool,
           },
         });
@@ -781,6 +807,179 @@ export default forwardRef<MapHandle, Props>(function MapCanvas(props, ref) {
     props.project.flowThresholdHa,
     ready,
   ]);
+  useEffect(() => {
+    const m = mapRef.current;
+    if (!m?.getSource("sketches")) return;
+    if (!props.watershed) {
+      if (m.getLayer("watershed-basin"))
+        for (const layer of [
+          "watershed-basin",
+          "watershed-outline",
+          "watershed-downstream",
+          "watershed-arrows",
+          "watershed-points",
+        ])
+          if (m.getLayer(layer)) m.setLayoutProperty(layer, "visibility", "none");
+      return;
+    }
+    const data: FeatureCollection = {
+      type: "FeatureCollection",
+      features: [
+        ...props.watershed.basin.features.map((feature) => ({
+          ...feature,
+          properties: { ...feature.properties, kind: "basin" },
+        })),
+        {
+          ...props.watershed.downstream,
+          properties: { kind: "downstream" },
+        },
+        {
+          type: "Feature",
+          properties: { kind: "outlet" },
+          geometry: { type: "Point", coordinates: props.watershed.outlet },
+        },
+        {
+          type: "Feature",
+          properties: { kind: "endpoint" },
+          geometry: { type: "Point", coordinates: props.watershed.endpoint },
+        },
+      ],
+    };
+    if (!m.getSource("watershed-result")) {
+      m.addSource("watershed-result", { type: "geojson", data });
+      const before = m.getLayer("sketch-fill") ? "sketch-fill" : undefined;
+      m.addLayer(
+        {
+          id: "watershed-basin",
+          type: "fill",
+          source: "watershed-result",
+          filter: ["==", ["get", "kind"], "basin"],
+          paint: { "fill-color": "#4da969", "fill-opacity": 0.32 },
+        },
+        before,
+      );
+      m.addLayer(
+        {
+          id: "watershed-outline",
+          type: "line",
+          source: "watershed-result",
+          filter: ["==", ["get", "kind"], "basin"],
+          paint: { "line-color": "#23824a", "line-width": 1.5, "line-opacity": 0.85 },
+        },
+        before,
+      );
+      m.addLayer(
+        {
+          id: "watershed-downstream",
+          type: "line",
+          source: "watershed-result",
+          filter: ["==", ["get", "kind"], "downstream"],
+          paint: { "line-color": "#087fae", "line-width": 3.2, "line-opacity": 0.95 },
+        },
+        before,
+      );
+      if (!m.hasImage("watershed-arrow")) {
+        const canvas = document.createElement("canvas");
+        canvas.width = canvas.height = 32;
+        const context = canvas.getContext("2d")!;
+        context.fillStyle = "#087fae";
+        context.beginPath();
+        context.moveTo(3, 12);
+        context.lineTo(19, 12);
+        context.lineTo(19, 6);
+        context.lineTo(30, 16);
+        context.lineTo(19, 26);
+        context.lineTo(19, 20);
+        context.lineTo(3, 20);
+        context.closePath();
+        context.fill();
+        m.addImage("watershed-arrow", context.getImageData(0, 0, 32, 32));
+      }
+      m.addLayer(
+        {
+          id: "watershed-arrows",
+          type: "symbol",
+          source: "watershed-result",
+          filter: ["==", ["get", "kind"], "downstream"],
+          layout: {
+            "symbol-placement": "line",
+            "symbol-spacing": 70,
+            "icon-image": "watershed-arrow",
+            "icon-size": 0.48,
+            "icon-allow-overlap": true,
+            "icon-rotation-alignment": "map",
+          },
+        },
+        before,
+      );
+      m.addLayer(
+        {
+          id: "watershed-points",
+          type: "circle",
+          source: "watershed-result",
+          filter: ["in", ["get", "kind"], ["literal", ["outlet", "endpoint"]]],
+          paint: {
+            "circle-radius": ["case", ["==", ["get", "kind"], "endpoint"], 7, 5],
+            "circle-color": ["case", ["==", ["get", "kind"], "endpoint"], "#075d85", "#ffffff"],
+            "circle-stroke-color": "#087fae",
+            "circle-stroke-width": 2.5,
+          },
+        },
+        before,
+      );
+    } else {
+      (m.getSource("watershed-result") as GeoJSONSource).setData(data);
+    }
+    for (const layer of [
+      "watershed-basin",
+      "watershed-outline",
+      "watershed-downstream",
+      "watershed-arrows",
+      "watershed-points",
+    ])
+      m.setLayoutProperty(layer, "visibility", "visible");
+  }, [props.watershed, ready]);
+  useEffect(() => {
+    const m = mapRef.current;
+    if (!m?.getSource("sketches")) return;
+    if (!props.staticFlood) {
+      if (m.getLayer("static-flood-result"))
+        m.setLayoutProperty("static-flood-result", "visibility", "none");
+      return;
+    }
+    const coordinates = props.staticFlood.coordinates as [
+      [number, number],
+      [number, number],
+      [number, number],
+      [number, number],
+    ];
+    if (!m.getSource("static-flood-result")) {
+      m.addSource("static-flood-result", {
+        type: "image",
+        url: props.staticFlood.image,
+        coordinates,
+      });
+      m.addLayer(
+        {
+          id: "static-flood-result",
+          type: "raster",
+          source: "static-flood-result",
+          paint: { "raster-opacity": 0.88, "raster-fade-duration": 120 },
+        },
+        m.getLayer("watershed-basin")
+          ? "watershed-basin"
+          : m.getLayer("sketch-fill")
+            ? "sketch-fill"
+            : undefined,
+      );
+    } else {
+      (m.getSource("static-flood-result") as ImageSource).updateImage({
+        url: props.staticFlood.image,
+        coordinates,
+      });
+    }
+    m.setLayoutProperty("static-flood-result", "visibility", "visible");
+  }, [props.staticFlood, ready]);
   useEffect(() => {
     const m = mapRef.current;
     markers.current.forEach((marker) => marker.remove());

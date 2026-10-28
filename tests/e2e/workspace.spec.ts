@@ -267,7 +267,7 @@ test("Import real GeoJSON structure, export and control layers; reject projected
       mimeType: "application/json",
       buffer: Buffer.from(JSON.stringify(bad)),
     });
-  await expect(page.getByRole("status")).toContainText("WGS84");
+  await expect(page.locator(".toast")).toContainText("WGS84");
 });
 test("Polygon drawing and vertex edit; panels preserve centre", async ({
   page,
@@ -313,11 +313,11 @@ test("Missing terrain is explicit and rainfall is a saved parameter", async ({
     await page.request.get("/api/projects/" + rows[0].id)
   ).json();
   expect(result.rainfall).toBe(85);
-  const analysis = await page.request.post("/api/analysis/flash-flood", {
-    data: { rainfall: 85 },
+  const analysis = await page.request.post("/api/terrain/flash-flood", {
+    data: { rainfall_mm: 85, minimum_depth_m: 0.1 },
   });
   expect(analysis.status()).toBe(409);
-  await page.getByRole("button", { name: "Watershed", exact: true }).click();
+  await page.getByRole("button", { name: "Cuenca", exact: true }).click();
   await expect(page.getByText("Posición de consulta")).toBeVisible();
   await page
     .locator(".maplibregl-canvas")

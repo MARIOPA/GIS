@@ -72,3 +72,19 @@ estática sigue pendiente de implementación y validación. Dynamic Flood exclui
 - Precipitación y opacidad mantienen barras coherentes con esos controles.
 - La entrega de Windows incorpora un lanzador superior que reconstruye, verifica,
   actualiza y abre la aplicación con un solo doble clic después de descomprimirla.
+
+# Ampliación 0.6.0: cuencas y lluvia estacionaria (28-10-2026)
+
+- Un clic dentro del MDT delimita las celdas que drenan al punto con D8. La cuenca
+  se dibuja en verde; el recorrido aguas abajo, en azul con flechas, termina en
+  la última celda válida de la tesela.
+- El Flash Flood Map es una pantalla estacionaria: lluvia uniforme e instantánea,
+  almacenamiento en depresiones conectadas y vertido del exceso. No calcula
+  duración, hidrograma, velocidad ni caudal punta.
+- El resultado no incorpora todavía infiltración, drenaje urbano, edificios o
+  correcciones validadas. Se identifica en la interfaz como provisional.
+- La capa de correcciones permite documentar puntos, conexiones y zonas candidatas.
+  Esas geometrías se guardan con el proyecto, pero no modifican el D8 actual.
+- Las pruebas sintéticas comprueban el área aportante, el recorrido, el llenado y
+  el vertido. Validan el algoritmo implementado; no certifican el resultado del
+  MDT piloto ni equivalencia científica con SCALGO.

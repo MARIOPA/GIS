@@ -12,7 +12,7 @@ import tarfile
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = '0.5.0'
+VERSION = '0.6.0'
 CACHE = Path('/tmp/torrents-release-cache')
 PY_RELEASE = 'https://github.com/astral-sh/python-build-standalone/releases/download/20251014/'
 DOWNLOADS = {
@@ -54,7 +54,7 @@ def zip_tree(source, target, prefix=''):
 
 
 def prune_runtime_scripts(destination):
-    allowed = {'query_terrain.py', 'import_surface.py', 'surface.mjs', 'launch-local.mjs',
+    allowed = {'query_terrain.py', 'query_hydrology.py', 'import_surface.py', 'surface.mjs', 'launch-local.mjs',
                'pick-surface.mjs', 'install-windows.mjs', 'create-user.mjs'}
     for path in (destination / 'scripts').iterdir():
         if path.is_file() and path.name not in allowed:

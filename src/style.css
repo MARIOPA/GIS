@@ -2350,6 +2350,33 @@ kbd {
   width: 100%;
   margin-top: 15px;
 }
+.correction-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+  padding: 2px 10px 8px 32px;
+}
+.correction-actions button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 6px 3px;
+  border: 1px solid #dce6e9;
+  border-radius: 4px;
+  color: #587580;
+  font-size: 8px;
+  background: #fff;
+}
+.correction-actions button:hover {
+  border-color: #b9d1d8;
+  background: #f4f9fa;
+}
+.correction-actions button:focus-visible {
+  outline: 2px solid #167e91;
+  outline-offset: 1px;
+}
 .stepped-range {
   margin-top: 14px;
 }
@@ -2449,6 +2476,55 @@ kbd {
 }
 .hydrology-stats {
   margin-top: 12px;
+}
+.watershed-loading {
+  margin-top: 14px;
+  padding: 10px;
+  border-radius: 5px;
+  background: #eef7f1;
+  color: #397153;
+  font-size: 9px;
+}
+.watershed-result {
+  margin-top: 15px;
+  padding-top: 13px;
+  border-top: 1px solid #e3ecee;
+}
+.watershed-key {
+  display: grid;
+  grid-template-columns: 13px 1fr;
+  align-items: center;
+  gap: 6px 8px;
+  color: #6d858f;
+  font-size: 9px;
+}
+.basin-key {
+  width: 12px;
+  height: 9px;
+  border: 1px solid #23824a;
+  border-radius: 2px;
+  background: rgba(77, 169, 105, 0.35);
+}
+.flow-key {
+  width: 13px;
+  height: 3px;
+  border-radius: 3px;
+  background: #087fae;
+}
+.watershed-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 14px;
+}
+.watershed-actions .secondary {
+  flex: 1;
+}
+.flood-stats {
+  margin-top: 17px;
+  padding-top: 12px;
+  border-top: 1px solid #e3ecee;
 }
 .profile-result {
   margin-top: 15px;

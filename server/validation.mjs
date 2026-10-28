@@ -69,6 +69,7 @@ export const projectSchema = z
     features: collectionSchema,
     layers: z.array(layerSchema).max(100),
     rainfall: z.number().min(0).max(500),
+    floodDepthM: z.union([z.literal(0.05), z.literal(0.1), z.literal(0.25), z.literal(0.5)]).optional(),
     terrainVisible: z.boolean().optional(),
     hillshadeVisible: z.boolean().optional(),
     contoursVisible: z.boolean().optional(),

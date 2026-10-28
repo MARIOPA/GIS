@@ -27,6 +27,7 @@ export type Project = {
   features: FeatureCollection;
   layers: Layer[];
   rainfall: number;
+  floodDepthM?: 0.05 | 0.1 | 0.25 | 0.5;
   terrainVisible?: boolean;
   hillshadeVisible?: boolean;
   contoursVisible?: boolean;
@@ -39,6 +40,29 @@ export type Project = {
 };
 export type SavedProject = { id: string; name: string; updatedAt: string };
 export type QueryResult = { lng: number; lat: number; feature?: MapFeature };
+export type WatershedResult = {
+  basin: FeatureCollection;
+  downstream: Feature;
+  outlet: number[];
+  endpoint: number[];
+  area_m2: number;
+  downstream_length_m: number;
+  cells: number;
+  status: string;
+};
+export type StaticFloodResult = {
+  rainfall_mm: number;
+  minimum_depth_m: number;
+  stored_volume_m3: number;
+  boundary_outflow_m3: number;
+  flooded_area_m2: number;
+  maximum_depth_m: number;
+  reservoirs: number;
+  image: string;
+  coordinates: number[][];
+  status: string;
+  limitations: string;
+};
 export type ToolSpec = { name: string; hint: string };
 export const TOOL_INFO: Record<Tool, ToolSpec> = {
   navigate: {
@@ -54,8 +78,8 @@ export const TOOL_INFO: Record<Tool, ToolSpec> = {
     hint: "Dibuja una línea de referencia · Enter termina el trazado · Consulta el MDT disponible desde el elemento.",
   },
   watershed: {
-    name: "Watershed",
-    hint: "Selecciona un punto de salida. El cálculo requiere un MDT validado.",
+    name: "Cuenca",
+    hint: "Haz clic dentro del MDT para delimitar la cuenca y seguir el agua hasta el borde.",
   },
   select: {
     name: "Seleccionar",
@@ -93,8 +117,17 @@ export const INITIAL: Project = {
       color: "#ee9b46",
       source: "drawing",
     },
+    {
+      id: "hydrological-corrections",
+      name: "Correcciones hidrológicas",
+      visible: true,
+      opacity: 1,
+      color: "#247da0",
+      source: "drawing",
+    },
   ],
   rainfall: 50,
+  floodDepthM: 0.1,
   terrainVisible: true,
   hillshadeVisible: true,
   contoursVisible: false,

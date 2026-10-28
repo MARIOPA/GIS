@@ -3,6 +3,7 @@ import {
   useEffect,
   useRef,
   useState,
+  type CSSProperties,
   type ReactNode,
 } from "react";
 import {
@@ -209,6 +210,67 @@ const bottomTools: { id: Tool; icon: LucideIcon; label: string }[] = [
   { id: "polygon", icon: Triangle, label: "Polígono" },
   { id: "area", icon: SquareDashed, label: "Medir área" },
 ];
+type RangeOption = { value: number; label: string };
+function SteppedRange({
+  id,
+  label,
+  ariaLabel,
+  options,
+  value,
+  onChange,
+  compact = false,
+}: {
+  id: string;
+  label: string;
+  ariaLabel: string;
+  options: RangeOption[];
+  value: number;
+  onChange: (value: number) => void;
+  compact?: boolean;
+}) {
+  const foundIndex = options.findIndex((option) => option.value === value);
+  const activeIndex = foundIndex < 0 ? 0 : foundIndex;
+  const progress = options.length <= 1 ? 0 : (activeIndex / (options.length - 1)) * 100;
+  const selected = options[activeIndex];
+  return (
+    <div className={`stepped-range ${compact ? "stepped-range--compact" : ""}`}>
+      <div className="stepped-range__heading">
+        <label htmlFor={id}>{label}</label>
+        <output htmlFor={id}>{selected?.label}</output>
+      </div>
+      <input
+        id={id}
+        className="stepped-range__input"
+        aria-label={ariaLabel}
+        aria-valuetext={selected?.label}
+        type="range"
+        min="0"
+        max={Math.max(0, options.length - 1)}
+        step="1"
+        value={activeIndex}
+        style={{ "--range-progress": `${progress}%` } as CSSProperties}
+        onChange={(event) => onChange(options[Number(event.target.value)].value)}
+      />
+      <div
+        className="stepped-range__labels"
+        style={{ gridTemplateColumns: `repeat(${options.length}, 1fr)` }}
+      >
+        {options.map((option, index) => (
+          <button
+            key={option.value}
+            type="button"
+            className={index === activeIndex ? "active" : ""}
+            aria-label={`Seleccionar ${option.label}`}
+            aria-pressed={index === activeIndex}
+            onClick={() => onChange(option.value)}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 function IconButton({
   icon: Icon,
   label,
@@ -1070,29 +1132,23 @@ export default function App() {
                             <span>Curvas de nivel</span>
                             <span className="status-chip">Disponible</span>
                           </button>
-                          <label>
-                            Intervalo
-                            <select
-                              aria-label="Intervalo de curvas de nivel"
-                              value={project.contourInterval || 10}
-                              onChange={(event) =>
-                                update((p) => ({
-                                  ...p,
-                                  contourInterval: Number(event.target.value) as
-                                    | 5
-                                    | 10
-                                    | 20
-                                    | 0.25,
-                                }))
-                              }
-                            >
-                              {terrain.contours.intervals.map((interval) => (
-                                <option key={interval} value={interval}>
-                                  {interval} m
-                                </option>
-                              ))}
-                            </select>
-                          </label>
+                          <SteppedRange
+                            id="contour-interval"
+                            label="Separación"
+                            ariaLabel="Intervalo de curvas de nivel"
+                            compact
+                            options={terrain.contours.intervals.map((interval) => ({
+                              value: interval,
+                              label: `${String(interval).replace(".", ",")} m`,
+                            }))}
+                            value={project.contourInterval || 10}
+                            onChange={(value) =>
+                              update((p) => ({
+                                ...p,
+                                contourInterval: value as 0.25 | 5 | 10 | 20,
+                              }))
+                            }
+                          />
                         </div>
                       ) : (
                         <div className="unavailable-row">
@@ -1860,26 +1916,23 @@ export default function App() {
                               : "Mostrar depresiones"}
                         </button>
                         {analysis === "flow" && (
-                          <label className="hydrology-select">
-                            Área mínima de la red
-                            <select
-                              aria-label="Área mínima de la red de flujo"
-                              value={project.flowThresholdHa || 1}
-                              onChange={(event) =>
-                                update((p) => ({
-                                  ...p,
-                                  flowThresholdHa: Number(event.target.value) as
-                                    | 0.25
-                                    | 1
-                                    | 5,
-                                }))
-                              }
-                            >
-                              <option value="0.25">0,25 ha</option>
-                              <option value="1">1 ha</option>
-                              <option value="5">5 ha</option>
-                            </select>
-                          </label>
+                          <SteppedRange
+                            id="flow-threshold"
+                            label="Nivel de red"
+                            ariaLabel="Área mínima de la red de flujo"
+                            options={[
+                              { value: 0.25, label: "Detallada" },
+                              { value: 1, label: "Media" },
+                              { value: 5, label: "Principal" },
+                            ]}
+                            value={project.flowThresholdHa || 1}
+                            onChange={(value) =>
+                              update((p) => ({
+                                ...p,
+                                flowThresholdHa: value as 0.25 | 1 | 5,
+                              }))
+                            }
+                          />
                         )}
                       </div>
                       <div className="parameter-section">

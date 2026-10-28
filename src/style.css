@@ -2346,40 +2346,106 @@ kbd {
   margin: 0 10px 5px;
   font-size: 9px;
 }
-.contour-control > label {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: -3px 10px 8px 32px;
-  color: #8499a2;
-  font-size: 9px;
-}
-.contour-control select {
-  border: 1px solid #dce6e9;
-  border-radius: 4px;
-  background: #fff;
-  color: #526c78;
-  padding: 3px 18px 3px 6px;
-  font-size: 9px;
-}
 .hydrology-toggle {
   width: 100%;
   margin-top: 15px;
 }
-.hydrology-select {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.stepped-range {
   margin-top: 14px;
-  color: #8499a2;
+}
+.stepped-range--compact {
+  margin: -2px 10px 10px 32px;
+}
+.stepped-range__heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  color: #778f99;
   font-size: 9px;
 }
-.hydrology-select select {
-  border: 1px solid #dce6e9;
+.stepped-range__heading output {
+  color: #315b69;
+  font-size: 10px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.stepped-range__input[type="range"] {
+  display: block;
+  width: 100%;
+  height: 22px;
+  margin: 3px 0 0;
+  appearance: none;
+  background: transparent;
+}
+.stepped-range__input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
   border-radius: 4px;
-  background: #fff;
-  color: #526c78;
-  padding: 7px 8px;
+  background: linear-gradient(
+    90deg,
+    #17889a 0 var(--range-progress),
+    #d6e2e6 var(--range-progress) 100%
+  );
+}
+.stepped-range__input[type="range"]::-webkit-slider-thumb {
+  width: 15px;
+  height: 15px;
+  margin-top: -5.5px;
+  appearance: none;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: #17889a;
+  box-shadow: 0 2px 6px rgba(20, 74, 86, 0.25);
+}
+.stepped-range__input[type="range"]::-moz-range-track {
+  height: 4px;
+  border-radius: 4px;
+  background: #d6e2e6;
+}
+.stepped-range__input[type="range"]::-moz-range-progress {
+  height: 4px;
+  border-radius: 4px;
+  background: #17889a;
+}
+.stepped-range__input[type="range"]::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: #17889a;
+  box-shadow: 0 2px 6px rgba(20, 74, 86, 0.25);
+}
+.stepped-range__input[type="range"]:focus-visible {
+  outline: 2px solid #167e91;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.stepped-range__labels {
+  display: grid;
+  margin-top: -1px;
+}
+.stepped-range__labels button {
+  min-width: 0;
+  padding: 3px 1px;
+  color: #93a5ac;
+  font-size: 8px;
+  text-align: center;
+  white-space: nowrap;
+}
+.stepped-range__labels button:first-child {
+  text-align: left;
+}
+.stepped-range__labels button:last-child {
+  text-align: right;
+}
+.stepped-range__labels button:hover,
+.stepped-range__labels button.active {
+  color: #315b69;
+}
+.stepped-range__labels button:focus-visible {
+  outline: 2px solid #167e91;
+  outline-offset: -1px;
+  border-radius: 3px;
 }
 .hydrology-stats {
   margin-top: 12px;

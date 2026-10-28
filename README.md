@@ -2,7 +2,7 @@
 
 Aplicación SIG de gabinete para conservar y documentar torrentes en Baleares. React, TypeScript y MapLibre, con API Node/Express, proyectos en SQLite y sesiones privadas. Creada desde cero en `MARIOPA/GIS`; el prototipo del entorno anterior no estaba disponible y no se ha modificado `design-patterns`.
 
-Para instalar la versión 0.4.0 en Windows/Linux, usarla portable o cargar superficies, consulta la [guía de instaladores y superficies](docs/INSTALADORES-Y-SUPERFICIES.md). La versión 0.4.0 añade curvas de 0,25 m y análisis topográfico provisional de depresiones, dirección D8, acumulación y red de flujo.
+Para instalar la versión 0.5.0 en Windows/Linux, usarla portable o cargar superficies, consulta la [guía de instaladores y superficies](docs/INSTALADORES-Y-SUPERFICIES.md). La versión 0.5.0 simplifica la instalación y permite cambiar por barras el nivel de la red, las curvas, la precipitación y la opacidad.
 
 ## Arranque
 
@@ -75,10 +75,10 @@ Variables opcionales: `PORT`, `HOST`, `DATA_DIR` (SQLite), `TERRAIN_DIR` (COG y 
 
 Consulta [arquitectura y alojamiento](docs/ARQUITECTURA.md), [informe del piloto](docs/pnoa/PILOTO.md) y [alcance respecto a SCALGO](docs/SCALGO-ALCANCE.md).
 
-# Instaladores y superficies 0.4.0
+# Instaladores y superficies 0.5.0
 
 Consulta [instalación Windows/Linux y uso portable](docs/INSTALADORES-Y-SUPERFICIES.md)
 y el [procedimiento real de LiDAR a MDT optimizado](docs/NOTA-LIDAR-A-MDT.md).
 La superficie se distribuye por separado y se importa desde ZIP o carpeta local
 sincronizada con SharePoint. El MDT tiene niveles COG y la visualización utiliza
-teselas XYZ. La versión 0.4.0 incorpora el resultado hidrológico estático del piloto.
+teselas XYZ. La versión 0.5.0 incorpora el resultado hidrológico estático del piloto.

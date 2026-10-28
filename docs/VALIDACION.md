@@ -64,3 +64,11 @@ estática sigue pendiente de implementación y validación. Dynamic Flood exclui
 - El piloto produjo 1.048 celdas rellenadas y 4.412 segmentos base. El borde de
   la tesela se considera abierto; no se modelan alcantarillas, puentes, edificios,
   rugosidad, lluvia ni inundación.
+
+# Ampliación 0.5.0: instalación directa y controles sencillos (28-10-2026)
+
+- La red de flujo cambia entre vista detallada, media y principal mediante una barra.
+- Las curvas de nivel cambian entre 0,25, 5, 10 y 20 m mediante el mismo patrón.
+- Precipitación y opacidad mantienen barras coherentes con esos controles.
+- La entrega de Windows incorpora un lanzador superior que reconstruye, verifica,
+  actualiza y abre la aplicación con un solo doble clic después de descomprimirla.

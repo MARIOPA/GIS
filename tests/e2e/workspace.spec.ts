@@ -139,10 +139,18 @@ test("Terrain requests numeric XYZ tiles and changes detail when zooming", async
     page.getByRole("button", { name: /Relieve sombreado/ }),
   ).toBeVisible();
   await page.getByRole("button", { name: /Curvas de nivel/ }).click();
-  await page.getByLabel("Intervalo de curvas de nivel").selectOption("0.25");
+  await page.getByLabel("Intervalo de curvas de nivel").press("Home");
+  await expect(page.getByLabel("Intervalo de curvas de nivel")).toHaveAttribute(
+    "aria-valuetext",
+    "0,25 m",
+  );
   await page.getByRole("button", { name: /Red de flujo Disponible/ }).click();
   await expect(page.getByText("Flujo topográfico D8")).toBeVisible();
-  await page.getByLabel("Área mínima de la red de flujo").selectOption("0.25");
+  await page.getByLabel("Área mínima de la red de flujo").press("Home");
+  await expect(page.getByLabel("Área mínima de la red de flujo")).toHaveAttribute(
+    "aria-valuetext",
+    "Detallada",
+  );
   await page.getByRole("button", { name: /Depresiones Disponible/ }).click();
   await expect(page.getByText("Relleno de depresiones")).toBeVisible();
   await focus.click();

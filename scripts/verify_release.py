@@ -50,7 +50,7 @@ def exercise(root, browser_output=None):
                 time.sleep(0.1)
         else:
             raise RuntimeError('Timeout de arranque del paquete.')
-        assert health['version'] == '0.4.0'
+        assert health['version'] == '0.5.0'
         assert json.loads(request('/api/session'))['authenticated']
         assert b'<div id="root"' in request('/')
         terrain = json.loads(request('/api/capabilities'))['terrain']
@@ -133,7 +133,7 @@ def verify(output):
     with tempfile.TemporaryDirectory(prefix='torrents-paquete-') as temporary:
         base = Path(temporary) / 'prueba con espacios y ñ'
         base.mkdir()
-        package = output / 'torrents-linux-x64-0.4.0.zip'
+        package = output / 'torrents-linux-x64-0.5.0.zip'
         with zipfile.ZipFile(package) as archive:
             assert archive.testzip() is None
             for info in archive.infolist():
@@ -141,7 +141,7 @@ def verify(output):
                 mode = (info.external_attr >> 16) & 0o777
                 if mode:
                     (base / info.filename).chmod(mode)
-        portable = base / 'torrents-linux-x64-0.4.0'
+        portable = base / 'torrents-linux-x64-0.5.0'
         run([portable / 'runtime/python/bin/python3', '-c', 'import rasterio,numpy,pyproj'])
         run(['bash', portable / 'importar-mdt.sh', output / 'mdt-piloto-v3.zip'])
         report['portable'] = exercise(portable, output / 'mdt-multirresolucion.png')
@@ -157,7 +157,7 @@ def verify(output):
         assert restricted.returncode != 0 and 'localhost' in restricted.stderr
         report['existing_install_preserved'] = True
         report['local_mode_refuses_network_binding'] = True
-    for name in ['torrents-windows-x64-0.4.0.zip', 'torrents-portable-windows-x64-0.4.0.zip']:
+    for name in ['torrents-windows-x64-0.5.0.zip', 'torrents-portable-windows-x64-0.5.0.zip']:
         with zipfile.ZipFile(output / name) as archive:
             assert archive.testzip() is None
             names = archive.namelist()
